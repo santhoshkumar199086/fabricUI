@@ -5,7 +5,7 @@ import { FaServer, FaGlobe, FaRocket } from 'react-icons/fa';
 function Dashboard() {
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-semibold">Welcome To PalC-NetFabric!</h1>
+      <h1 className="text-3xl font-semibold">Welcome To PalC Fabric Manager</h1>
       <div className="flex flex-wrap gap-6">
         <Card
           title="Build Racks"
