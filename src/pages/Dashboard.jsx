@@ -469,6 +469,7 @@ const SKUManagementApp = () => {
   };
 
   return (
+
     <div className="max-w-6xl mx-auto p-6 bg-white">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">SKU Management System</h1>
       
