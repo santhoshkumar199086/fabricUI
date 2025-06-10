@@ -28,8 +28,6 @@ export const useInfluxData = (timeRange = "24h", measurementTypes = []) => {
         ];
   }, [JSON.stringify(measurementTypes)]); // Deep comparison
 
-  // console.log("measurements",measurements);
-
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
