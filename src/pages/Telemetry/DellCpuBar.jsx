@@ -4,13 +4,6 @@ import { useInfluxData } from "../../Hooks/useInfluxData";
 
 
 const DellCpuBar = ({data}) => {
-  // const data = useInfluxData();
-  // const [influxdata, setInfluxData] = useState([]);
-
-  // useEffect(() => {
-  //   setInfluxData(data);
-  // }, [data]);
-
   const dellCpu = data.filter((item) => item._measurement === "dell_cpu");
   const groupByField = dellCpu.reduce((acc, point) => {
     if (!acc[point._field]) {

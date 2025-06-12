@@ -9,16 +9,7 @@ const DellArpTable = ({
   timeRange,
   setTimeRange,
 }) => {
-  console.log("DellArpTable_data", data);
-  console.log("DellArpTable_loading", loading);
-
-  console.log("DellArpTable_showModal", showModal);
-  console.log("DellArpTable_closeModal", closeModal);
-  console.log("DellArpTable_timeRange", timeRange);
-  console.log("DellArpTable_setTimeRange", setTimeRange);
-
   const [searchTerm, setSearchTerm] = useState("");
-
   // Show only first 10 records initially
   const limitedData = data.slice(0, 10);
 
@@ -144,7 +135,7 @@ const DellArpTable = ({
                     ) : (
                       <tr>
                         <td
-                          colSpan="4"
+                          colSpan="5"
                           className="py-4 text-center text-gray-500"
                         >
                           <ErrorMessage />
