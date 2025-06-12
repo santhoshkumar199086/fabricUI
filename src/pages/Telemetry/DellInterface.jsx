@@ -22,10 +22,7 @@ const DellInterface = ({
       .includes(searchTerm.toLowerCase())
   );
 
-  const handleTimeChange = (e) => {
-    setTimeRange(e.target.value);
-  };
-
+ 
   const handleCloseModal = () => {
     closeModal();
     setSearchTerm("");
@@ -36,6 +33,7 @@ const DellInterface = ({
       <table className="min-w-full bg-white border border-gray-200">
         <thead className="bg-gray-100">
           <tr>
+            <th className="py-2 px-4 border">Time</th>
             <th className="py-2 px-4 border">Interface Name</th>
             <th className="py-2 px-4 border">Status</th>
             <th className="py-2 px-4 border">Addr</th>
@@ -44,6 +42,7 @@ const DellInterface = ({
         <tbody>
           {limitedData.map((entry, index) => (
             <tr key={index} className="text-center border-t">
+              <td className="py-2 px-4 border">{entry["_time"]}</td>
               <td className="py-2 px-4 border">{entry["name"]}</td>
               <td className="py-2 px-4 border">{entry["_field"]}</td>
               <td className="py-2 px-4 border">{entry["_value"]}</td>
@@ -73,7 +72,7 @@ const DellInterface = ({
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
                 <select
-                  onChange={handleTimeChange}
+                  onChange={(e)=> setTimeRange(e.target.value)}
                   value={timeRange}
                   className="border rounded px-2 py-1"
                 >

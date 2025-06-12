@@ -2,13 +2,6 @@ import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 
 const DellMemory = ({data}) => {
-  // const data = useInfluxData();
-  // const [influxdata, setInfluxData] = useState([]);
-
-  // useEffect(() => {
-  //   setInfluxData(data);
-  // }, [data]);
-
   const dellMemory = data.filter(
     (item) => item._measurement === "dell_mem"
   );
