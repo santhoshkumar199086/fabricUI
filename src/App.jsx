@@ -21,6 +21,7 @@ function App() {
               <Route path="/SKU" element={<SKUManagementApp />} />
               <Route path="/Fabric" element={<FabricConfigApp />} />
                <Route path="/CreateSite" element={<SiteConfigurationApp/>} />
+
             </Routes>
           </main>
         </div>
