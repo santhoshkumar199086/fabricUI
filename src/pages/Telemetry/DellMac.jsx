@@ -28,7 +28,7 @@ const DellMac = ({
   };
 
   return (
-    <div className="pl-4">
+    <div className="p-0">
       <table className="min-w-full bg-white border border-gray-200">
         <thead className="bg-gray-100">
           <tr>
