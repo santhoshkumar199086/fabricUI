@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { InfluxDB } from "@influxdata/influxdb-client";
+// import TelemetryJSON from "../Helpers/telemetry.json";
 
 const token =
-  "_eVdp7GofG3Nu0yV1OR3m4zk3AV29MomQ2swIXM6HIpbuNE7Sy9asB8sbk1SCoawmxzPa_4TqVEStMdWdokFYw==";
+  "5waQ14YcyWWitL-F13MNRD9o5Vi4aV4yORO4FNEymILg8b3J34lI-QeshCckTrBT4hRYo0CdhrUUNfamm_cDzw==";
 const org = "Cntrs";
 const bucket = "dell_device";
 const url = "http://172.27.1.75:8086";
 
 const queryApi = new InfluxDB({ url, token }).getQueryApi(org);
 
-export const useInfluxData = (timeRange = "24h", measurementTypes = []) => {
+export const useInfluxData = (timeRange = "7d", measurementTypes = []) => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -26,9 +27,7 @@ export const useInfluxData = (timeRange = "24h", measurementTypes = []) => {
           "dell_mac_table",
           "dell_routing_table",
         ];
-  }, [JSON.stringify(measurementTypes)]); // Deep comparison
-
-  // console.log("measurements",measurements);
+  }, [JSON.stringify(measurementTypes)]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,47 +35,44 @@ export const useInfluxData = (timeRange = "24h", measurementTypes = []) => {
       setError(null);
 
       try {
-        // const fluxQuery = `
-        //   from(bucket: "${bucket}")
-        //     |> range(start: -${timeRange})
-        //     |> filter(fn: (r) => contains(value: r._measurement, set: ${JSON.stringify(measurements)}))
-        // `;
-
-        //  const fluxQuery = `
-        //   from(bucket: "dell_device")
-        //   |> range(start: -7d)
-        //   |> filter(fn: (r) => r._measurement == "dell_arp_entry")
-        //   |> group(columns: ["addr", "intf-name"])
-        //   |> last()
-        // `;
-
         const fluxQuery = `
-          // Query for dell_arp_entry with special processing
+          // Query for dell_arp_entry
           arp_entries = from(bucket: "${bucket}")
             |> range(start: -${timeRange})
             |> filter(fn: (r) => r._measurement == "dell_arp_entry")
             |> group(columns: ["addr", "intf-name"])
             |> last()
 
-          // // Query for dell_interface with special processing
-          // interface_status = from(bucket: "${bucket}")
-          //   |> range(start: -${timeRange})
-          //   |> filter(fn: (r) => r._measurement == "dell_interface")
-          //   |> filter(fn: (r) => r._field == "admin_status")  
-          //   |> group(columns: ["interface"])
-          //   |> last()  
+          // Query for dell_interface
+          interface_status = from(bucket: "${bucket}")
+            |> range(start: -${timeRange})
+            |> filter(fn: (r) => r._measurement == "dell_interface")
+            |> filter(fn: (r) => r._field == "admin_status")  
+            |> group(columns: ["interface"])
+            |> last()
+            
+          //   // Query for dell_routing_table
+          routing_table_entries = from(bucket: "${bucket}")
+            |> range(start: -${timeRange})
+            |> filter(fn: (r) => r._measurement == "dell_routing_table")
+            |> filter(fn: (r) => r._field == "last-updated")  
+            |> group(columns: ["source-protocol"])
+            |> last()  
            
             // Query for all other measurements
           other_measurements = from(bucket: "${bucket}")
             |> range(start: -${timeRange})
             |> filter(fn: (r) => contains(value: r._measurement, set: ${JSON.stringify(
               measurements.filter(
-                (m) => m !== "dell_arp_entry" && m !== "dell_interface"
+                (m) =>
+                  m !== "dell_arp_entry" &&
+                  m !== "dell_interface" &&
+                  m !== "dell_routing_table"
               )
             )}))
           
           // Combine both results
-          union(tables: [arp_entries, other_measurements])
+          union(tables: [arp_entries, interface_status, routing_table_entries, other_measurements])
         `;
 
         const rows = [];
@@ -109,10 +105,10 @@ export const useInfluxData = (timeRange = "24h", measurementTypes = []) => {
     fetchData();
   }, [timeRange, measurements]);
 
-  // Return the data as an object with data property
+
   return {
-    data, // The actual data array
-    isLoading, // Loading state
-    error, // Error state
+    data,
+    isLoading,
+    error,
   };
 };

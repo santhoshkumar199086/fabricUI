@@ -22,17 +22,13 @@ const DellMac = ({
       .includes(searchTerm.toLowerCase())
   );
 
-  const handleTimeChange = (e) => {
-    setTimeRange(e.target.value);
-  };
-
   const handleCloseModal = () => {
     closeModal();
     setSearchTerm("");
   };
 
   return (
-    <div className="pl-4">
+    <div className="p-0">
       <table className="min-w-full bg-white border border-gray-200">
         <thead className="bg-gray-100">
           <tr>
@@ -73,7 +69,7 @@ const DellMac = ({
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
                 <select
-                  onChange={handleTimeChange}
+                  onChange={(e)=>setTimeRange(e.target.value)}
                   value={timeRange}
                   className="border rounded px-2 py-1"
                 >
