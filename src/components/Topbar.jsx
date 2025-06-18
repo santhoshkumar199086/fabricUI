@@ -29,7 +29,7 @@ function Topbar() {
         </NavLink>
 
         <NavLink
-          to="/telemetry"
+          to="/spine"
           className={({ isActive }) =>
             `text-lg pb-1 ${
               isActive
