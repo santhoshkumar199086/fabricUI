@@ -10,12 +10,15 @@ import Login from "../src/pages/Login";
 import ProtectedRoute from "../src/Routes/ProtectedRoute";
 import Dashboard from "../src/pages/Dashboard";
 import Telemetry from "../src/pages/Telemetry/Telemetry";
-import Sidebar from "./components/Sidebar";
-import Topbar from "./components/Topbar";
+// import Sidebar from "./components/Sidebar";
+// import Topbar from "./components/Topbar";
 import FabricConfigApp from "./pages/Fabric";
 import SKUManagementApp from "./pages/SKU";
 import SiteConfigurationApp from "./pages/CreateSIte";
 import Spine from "./pages/Telemetry/SpineTelemetry"
+import PalCFabricManager from "./pages/NewFabric";
+import NewDashboard from "./pages/DashboardNew";
+import IntentBasedNetworkDesigner from "./pages/FabricNewDesign"
 
 function App() {
   return (
@@ -28,15 +31,18 @@ function App() {
             path="/*"
             element={
               <div className="flex h-screen">
-                <Sidebar />
+                {/* <Sidebar /> */}
                 <div className="flex flex-col flex-1">
-                  <Topbar />
-                  <main className="p-6 overflow-auto">
+                  {/* <Topbar /> */}
+                  <main className="overflow-auto">
                     <Routes>
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/telemetry" element={<Telemetry />} />
                       <Route path="/SKU" element={<SKUManagementApp />} />
                       <Route path="/Fabric" element={<FabricConfigApp />} />
+                      <Route path="/PalcFabric" element={<PalCFabricManager />} />
+                      <Route path="/NewDesign" element={<NewDashboard />} />
+                       <Route path="/FabricNewDesign" element={<IntentBasedNetworkDesigner />} />
                       <Route
                         path="/CreateSite"
                         element={<SiteConfigurationApp />}
