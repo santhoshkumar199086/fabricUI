@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Radio, Settings, Menu, X } from "lucide-react";
 import Palcwhite from "../assets/icons/PalclogoWhite.png";
 
@@ -13,13 +13,12 @@ const Sidebar = ({
   const [screenSize, setScreenSize] = useState("desktop");
   const navigate = useNavigate();
 
-  // Handle screen size changes
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
       if (width < 768) {
         setScreenSize("mobile");
-        setSidebarCollapsed(true); // Auto-collapse on mobile
+        setSidebarCollapsed(true);
       } else if (width < 1024) {
         setScreenSize("tablet");
       } else {
@@ -49,13 +48,6 @@ const Sidebar = ({
   };
 
   const navigationItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      path: "/dashboard",
-      isActive: true,
-    },
     {
       id: "fabric",
       label: "Fabric NMS",
@@ -134,19 +126,21 @@ const Sidebar = ({
 
         {/* Logo */}
         <div className={`${sidebarCollapsed ? "p-3 lg:p-4" : "p-4 lg:p-6"}`}>
-          <div className="flex items-center space-x-3">
-            <img src={Palcwhite} alt="PalcWhiteLogo" width={50} />
-            {(!sidebarCollapsed || mobileSidebarOpen) && (
-              <div className="transition-opacity duration-300 overflow-hidden">
-                <h1 className="font-medium text-4xl xl:text-5xl whitespace-nowrap">
-                  PalC
-                </h1>
-                <p className="text-purple-200 text-xs lg:text-sm whitespace-nowrap">
-                  Fabric Manager
-                </p>
-              </div>
-            )}
-          </div>
+          <Link to="/dashboard">
+            <div className="flex items-center space-x-3">
+              <img src={Palcwhite} alt="PalcWhiteLogo" width={50} />
+              {(!sidebarCollapsed || mobileSidebarOpen) && (
+                <div className="transition-opacity duration-300 overflow-hidden">
+                  <h1 className="font-medium text-4xl xl:text-5xl whitespace-nowrap">
+                    PalC
+                  </h1>
+                  <p className="text-purple-200 text-xs lg:text-sm whitespace-nowrap">
+                    Fabric Manager
+                  </p>
+                </div>
+              )}
+            </div>
+          </Link>
         </div>
 
         {/* Navigation */}

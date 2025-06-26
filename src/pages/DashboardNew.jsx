@@ -94,7 +94,7 @@ const DashboardContent = () => {
 
             {/* Server Infrastructure Image - Responsive */}
             <div className="mt-6 lg:mt-8 flex justify-end">
-              <div className="w-full max-w-xs sm:max-w-sm lg:max-w-md">
+              <div className="w-full max-w-xs sm:max-w-sm lg:max-w-sm">
                 <img src={ServerIcon} alt="Datacenter-server" />
               </div>
             </div>
@@ -126,16 +126,6 @@ const DashboardContent = () => {
                     </p>
                   </div>
                 </div>
-
-                {/* Arrow at bottom right */}
-                <div className="flex justify-end mt-auto">
-                  <button className="w-6 h-6 lg:w-8 lg:h-8 bg-pink-300 rounded-full flex items-center justify-center hover:bg-pink-400 transition-colors">
-                    <ChevronRight
-                      size={12}
-                      className="lg:w-4 lg:h-4 text-pink-700"
-                    />
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -160,16 +150,6 @@ const DashboardContent = () => {
                       the overall design.
                     </p>
                   </div>
-                </div>
-
-                {/* Arrow at bottom right */}
-                <div className="flex justify-end mt-auto">
-                  <button className="w-6 h-6 lg:w-8 lg:h-8 bg-blue-200 rounded-full flex items-center justify-center hover:bg-blue-300 transition-colors">
-                    <ChevronRight
-                      size={12}
-                      className="lg:w-4 lg:h-4 text-blue-600"
-                    />
-                  </button>
                 </div>
               </div>
             </div>
@@ -196,16 +176,6 @@ const DashboardContent = () => {
                       intended.
                     </p>
                   </div>
-                </div>
-
-                {/* Arrow at bottom right */}
-                <div className="flex justify-end mt-auto">
-                  <button className="w-6 h-6 lg:w-8 lg:h-8 bg-purple-200 rounded-full flex items-center justify-center hover:bg-purple-300 transition-colors">
-                    <ChevronRight
-                      size={12}
-                      className="lg:w-4 lg:h-4 text-purple-600"
-                    />
-                  </button>
                 </div>
               </div>
             </div>

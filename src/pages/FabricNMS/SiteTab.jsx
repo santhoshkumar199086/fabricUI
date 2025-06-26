@@ -111,13 +111,13 @@ const SiteTab = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
+    <div className="space-y-6 pt-8">
+      {/* <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
         <h2 className="text-2xl font-bold mb-2">Location</h2>
         <p className="text-indigo-100">
           Add a new Location (Site) to your Data Center
         </p>
-      </div>
+      </div> */}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="space-y-4">
@@ -241,35 +241,37 @@ const SiteTab = ({
             <span className="ml-2 text-gray-600">Loading sites...</span>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-4">
             {formData.site.createdSites.length > 0 ? (
               formData.site.createdSites.map((site, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-                >
-                  <span className="font-medium text-gray-900">{site}</span>
-                  <button
-                    onClick={() => {
-                      handleRemoveSite(site);
-                    }}
-                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                <div className="">
+                  <div
+                    key={index}
+                    className="flex  items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <span className="font-medium text-gray-900">{site}</span>
+                    <button
+                      onClick={() => {
+                        handleRemoveSite(site);
+                      }}
+                      className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                    Remove
-                  </button>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -280,13 +282,6 @@ const SiteTab = ({
           </div>
         )}
       </div>
-
-      <button
-        onClick={() => handleSubmit("site")}
-        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
-      >
-        Save Site Configuration
-      </button>
     </div>
   );
 };

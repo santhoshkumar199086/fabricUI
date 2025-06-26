@@ -115,13 +115,7 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
       icon: Network,
       required: true,
     },
-    {
-      id: "topology",
-      title: "Network Topology",
-      description: "Define your network structure",
-      icon: Settings,
-      required: true,
-    },
+
     {
       id: "racks",
       title: "Rack Configuration",
@@ -130,8 +124,15 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
       required: true,
     },
     {
+      id: "topology",
+      title: "Network Topology",
+      description: "Define your network structure",
+      icon: Settings,
+      required: true,
+    },
+    {
       id: "network",
-      title: "Network Settings",
+      title: "Network Configuration",
       description: "ASN and IP pool configuration",
       icon: Settings,
       required: true,
@@ -1137,8 +1138,8 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
   };
 
   return (
-    <div className="max-w-9xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="max-w-9xl mx-auto min-h-screen">
+      <div className="bg-white rounded-lg overflow-hidden">
         {/* Header */}
         {/* <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
           <div className="flex items-center gap-3 mb-2">
@@ -1149,18 +1150,17 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
         </div> */}
         {/* Navigation - Wizard + Export */}
         {/* Wizard Navigation */}
-        <div className="bg-gray-100 border-b">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
+        <div className=" border-b">
+          <div className="px-6 pb-4">
+            <div className="flex items-center justify-between mb-8">
+              {/* <h2 className="text-lg font-semibold text-gray-800">
                 FABRIC CREATION
-              </h2>
+              </h2> */}
               <div className="flex items-center gap-4">
-                <div className="text-sm text-gray-600">
+                {/* <div className="text-sm text-gray-600">
                   Step {currentStep + 1} of {wizardSteps.length}
-                </div>
+                </div> */}
 
-                {/* Completion Status */}
                 {(() => {
                   const allRequiredCompleted = wizardSteps
                     .filter((step) => step.required)
@@ -1188,76 +1188,70 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
               </div>
             </div>
 
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-              <div
-                className="bg-gradient-to-r from-green-600 to-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{
-                  width: `${((currentStep + 1) / wizardSteps.length) * 100}%`,
-                }}
-              ></div>
-            </div>
-
-            {/* Step Tabs */}
-            {/* Step Tabs */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center justify-center w-full mb-6">
               {wizardSteps.map((step, index) => {
                 const isActive = currentStep === index;
-                const isCompleted = completedSteps.includes(step.id);
-                const isValid = validateStep(step.id);
+                const showAsCompleted =
+                  completedSteps.includes(step.id) && index < currentStep;
                 const IconComponent = step.icon;
-                const isPreviewStep = step.id === "preview";
-                const canAccessPreview =
-                  completedSteps.includes("interfaces") ||
-                  (currentStep === 5 && validateStep("interfaces"));
 
                 return (
-                  <button
-                    key={step.id}
-                    onClick={() => {
-                      // Prevent direct navigation to preview unless interface mapping is completed
-                      if (isPreviewStep && !canAccessPreview) {
-                        alert(
-                          "Please complete the Interface Mapping step first."
-                        );
-                        return;
-                      }
-                      goToStep(index);
-                    }}
-                    disabled={isPreviewStep && !canAccessPreview}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isPreviewStep && !canAccessPreview
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : isActive
-                        ? "bg-white text-blue-600 shadow-md border-2 border-blue-200"
-                        : isCompleted
-                        ? "bg-green-100 text-green-700 hover:bg-green-200"
-                        : isValid
-                        ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                        : "bg-gray-200 text-gray-500 hover:bg-gray-300"
-                    }`}
-                  >
-                    <IconComponent className="w-4 h-4" />
-                    <span className="hidden sm:inline">{step.title}</span>
-                    {isCompleted && <span className="text-green-600">✓</span>}
-                    {step.required && !isCompleted && (
-                      <span className="text-red-500">*</span>
+                  <React.Fragment key={step.id}>
+                    <button
+                      onClick={() => goToStep(index)}
+                      className={`flex items-center justify-center w-14 h-14 rounded-full ${
+                        showAsCompleted
+                          ? "bg-green-500 text-white"
+                          : isActive
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {showAsCompleted ? (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M5 13L9 17L19 7"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        <IconComponent size={18} />
+                      )}
+                    </button>
+
+                    {index < wizardSteps.length - 1 && (
+                      <div
+                        className={`w-36 h-1 ${
+                          index < currentStep &&
+                          completedSteps.includes(step.id)
+                            ? "bg-green-500"
+                            : "bg-gray-200"
+                        }`}
+                      ></div>
                     )}
-                    {isPreviewStep && !canAccessPreview && (
-                      <span className="text-gray-400">🔒</span>
-                    )}
-                  </button>
+                  </React.Fragment>
                 );
               })}
+            </div>
+
+            <div className="text-center mb-6">
+              <h3 className="text-md font-medium text-gray-700">
+                {wizardSteps[currentStep].title}
+              </h3>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        {/* Wizard Content */}
-        {/* Main Content */}
         <div className="p-6">
-          {/* Current Step Header */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
               {React.createElement(wizardSteps[currentStep].icon, {
@@ -1271,14 +1265,10 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
               {wizardSteps[currentStep].description}
             </p>
 
-            {/* Validation Status */}
             {currentStep < wizardSteps.length - 1 && (
               <div className="mt-3">
                 {validateStep(wizardSteps[currentStep].id) ? (
-                  <div className="flex items-center gap-2 text-green-600 text-sm">
-                    {/* <span className="w-2 h-2 bg-green-600 rounded-full"></span>
-            Step completed successfully */}
-                  </div>
+                  <div className="flex items-center gap-2 text-green-600 text-sm"></div>
                 ) : (
                   <div className="flex items-center gap-2 text-yellow-600 text-sm">
                     <span className="w-2 h-2 bg-yellow-600 rounded-full"></span>
@@ -1289,7 +1279,6 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
             )}
           </div>
 
-          {/* Step Content */}
           <div className="mb-8">
             {currentStep === 0 && (
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-6 rounded-lg">
@@ -1360,7 +1349,7 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
               </div>
             )}
 
-            {currentStep === 1 && (
+            {currentStep === 2 && (
               <div className="bg-gray-50 p-6 rounded-lg">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
@@ -1476,7 +1465,7 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
                 </div>
               </div>
             )}
-            {currentStep === 2 && (
+            {currentStep === 1 && (
               <div className="bg-gray-50 p-6 rounded-lg">
                 <div className="flex justify-between items-center mb-4">
                   <div>

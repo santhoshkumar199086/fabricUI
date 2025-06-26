@@ -118,7 +118,7 @@ const FabricConfigTabs = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -156,7 +156,7 @@ const FabricConfigTabs = () => {
             </nav>
           </div>
 
-          <div className="p-8">{renderTabContent()}</div>
+          <div className="px-8 pb-8">{renderTabContent()}</div>
         </div>
       </div>
     </div>

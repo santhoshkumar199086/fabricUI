@@ -26,7 +26,7 @@ const DeviceProfileTab = ({ formdata }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-scree p-6">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-3">
           <Monitor className="text-blue-600" />
