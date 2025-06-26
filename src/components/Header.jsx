@@ -42,7 +42,7 @@ const Header = ({
           </button>
           <div className="flex items-center space-x-2">
             <span className="text-xs lg:text-sm text-gray-600 hidden sm:block">
-              Hi imjacobrajan
+              Hi Palc
             </span>
             <div
               className="w-7 h-7 lg:w-8 lg:h-8 rounded-full flex items-center justify-center"
