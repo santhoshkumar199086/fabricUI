@@ -13,6 +13,7 @@ import {
   Info,
 } from "lucide-react";
 import { deviceProfiles } from "./data";
+import axios from "axios";
 
 const IntentBasedNetworkDesigner = ({ formData }) => {
   const [activePreviewTab, setActivePreviewTab] = useState("device");
@@ -163,10 +164,8 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
     const ipSpec = {};
     const nodeSpec = {};
 
-    // Determine if there are generic nodes in the topology
     const hasGenericNodes = networkIntent.racks.some((r) => r.hasGenericNodes);
 
-    // Generate IP pools based on enabled nodes
     if (networkIntent.superspineEnabled) {
       ipSpec.SUPERSPINE_LOOPBACK = {
         name: "SUPERSPINE_LOOPBACK",
@@ -1069,6 +1068,8 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
     }
   };
 
+  console.log(generateNodeSpec());
+
   const copyToClipboard = async () => {
     if (!generatedConfig) return;
 
@@ -1096,6 +1097,59 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
     } catch (err) {
       console.error("Failed to copy: ", err);
       alert("Failed to copy to clipboard");
+    }
+  };
+
+  const createFabric = async () => {
+    try {
+      const nodeSpecData = generateNodeSpec();
+      const fabricSpecPayload = nodeSpecData.nodeSpec;
+
+      const skuName = networkIntent.deviceConfig.spine;
+      const skuPayload = deviceProfiles[skuName];
+
+      if (!skuPayload) {
+        throw new Error(`SKU data not found for ${skuName}`);
+      }
+
+      const skuResponse = await axios.post(
+        "/api/fabric/v1.0.0/SKU/",
+        skuPayload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (skuResponse.status !== 200 && skuResponse.status !== 201) {
+        throw new Error(
+          `SKU API call failed: ${skuResponse.status} ${skuResponse.statusText}`
+        );
+      }
+
+      const fabricResponse = await axios.post(
+        "/api/fabric/v1.0.0/FabricSpec",
+        fabricSpecPayload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (fabricResponse.status !== 200 && fabricResponse.status !== 201) {
+        throw new Error(
+          `FabricSpec API call failed: ${fabricResponse.status} ${fabricResponse.statusText}`
+        );
+      }
+
+      return {
+        skuResponse: skuResponse.data,
+        fabricResponse: fabricResponse.data,
+      };
+    } catch (error) {
+      return null;
     }
   };
 
@@ -2426,25 +2480,10 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
                             {/* Download Button for Active Tab */}
                             <div className="mt-4 flex justify-center">
                               <button
-                                onClick={() => {
-                                  if (activePreviewTab === "device") {
-                                    downloadDeviceProfiles();
-                                  } else {
-                                    downloadNodeSpec();
-                                  }
-                                }}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                                  activePreviewTab === "device"
-                                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                                    : "bg-purple-600 text-white hover:bg-purple-700"
-                                }`}
+                                onClick={createFabric}
+                                className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all bg-blue-600 text-white hover:bg-blue-700"
                               >
-                                <Download className="w-4 h-4" />
-                                Download{" "}
-                                {activePreviewTab === "device"
-                                  ? "Device Profiles"
-                                  : "Node Specifications"}{" "}
-                                JSON
+                                Create Fabric
                               </button>
                             </div>
                           </div>
