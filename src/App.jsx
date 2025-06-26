@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -8,17 +7,16 @@ import {
 } from "react-router-dom";
 import Login from "../src/pages/Login";
 import ProtectedRoute from "../src/Routes/ProtectedRoute";
-import Dashboard from "../src/pages/Dashboard";
+import Layout from "./components/Layout";
+import DashboardContent from "./pages/DashboardNew";
 import Telemetry from "../src/pages/Telemetry/Telemetry";
-// import Sidebar from "./components/Sidebar";
-// import Topbar from "./components/Topbar";
 import FabricConfigApp from "./pages/Fabric";
 import SKUManagementApp from "./pages/SKU";
 import SiteConfigurationApp from "./pages/CreateSIte";
-import Spine from "./pages/Telemetry/SpineTelemetry"
+import Spine from "./pages/Telemetry/SpineTelemetry";
 import PalCFabricManager from "./pages/NewFabric";
-import NewDashboard from "./pages/DashboardNew";
-import IntentBasedNetworkDesigner from "./pages/FabricNewDesign"
+import IntentBasedNetworkDesigner from "./pages/FabricNewDesign";
+import FabricConfigTabs from "./pages/FabricNMS/FabricConfig";
 
 function App() {
   return (
@@ -30,28 +28,25 @@ function App() {
           <Route
             path="/*"
             element={
-              <div className="flex h-screen">
-                {/* <Sidebar /> */}
-                <div className="flex flex-col flex-1">
-                  {/* <Topbar /> */}
-                  <main className="overflow-auto">
-                    <Routes>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/telemetry" element={<Telemetry />} />
-                      <Route path="/SKU" element={<SKUManagementApp />} />
-                      <Route path="/Fabric" element={<FabricConfigApp />} />
-                      <Route path="/PalcFabric" element={<PalCFabricManager />} />
-                      <Route path="/NewDesign" element={<NewDashboard />} />
-                       <Route path="/FabricNewDesign" element={<IntentBasedNetworkDesigner />} />
-                      <Route
-                        path="/CreateSite"
-                        element={<SiteConfigurationApp />}
-                      />
-                      <Route path="/spine" element={<Spine />} />
-                    </Routes>
-                  </main>
-                </div>
-              </div>
+              <Layout>
+                <Routes>
+                  <Route path="/dashboard" element={<DashboardContent />} />
+                  <Route path="/telemetry" element={<Telemetry />} />
+                  <Route path="/SKU" element={<SKUManagementApp />} />
+                  <Route path="/Fabric" element={<FabricConfigApp />} />
+                  <Route path="/PalcFabric" element={<PalCFabricManager />} />
+                  <Route path="/fabricconfig" element={<FabricConfigTabs />} />
+                  <Route
+                    path="/FabricNewDesign"
+                    element={<IntentBasedNetworkDesigner />}
+                  />
+                  <Route
+                    path="/CreateSite"
+                    element={<SiteConfigurationApp />}
+                  />
+                  <Route path="/spine" element={<Spine />} />
+                </Routes>
+              </Layout>
             }
           />
         </Route>
