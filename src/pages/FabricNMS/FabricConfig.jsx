@@ -68,7 +68,6 @@ const FabricConfigTabs = () => {
     console.log(`${tabType} Form Data:`, formData[tabType]);
     console.log("Complete JSON:", JSON.stringify(formData, null, 2));
 
-    // Create a more user-friendly notification
     const notifications = {
       site: `Site configuration saved! ${formData.site.createdSites.length} sites configured.`,
       deviceProfile: `Device profile "${
@@ -120,7 +119,6 @@ const FabricConfigTabs = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -136,7 +134,6 @@ const FabricConfigTabs = () => {
           </div>
         </div>
 
-        {/* Tab Navigation */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="border-b border-gray-200">
             <nav className="flex">
@@ -159,7 +156,6 @@ const FabricConfigTabs = () => {
             </nav>
           </div>
 
-          {/* Tab Content */}
           <div className="p-8">{renderTabContent()}</div>
         </div>
       </div>

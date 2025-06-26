@@ -158,7 +158,6 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
       required: false,
     },
   ];
-  // Function to generate nodeSpec based on intent
   const generateNodeSpec = () => {
     const ipSpec = {};
     const nodeSpec = {};
