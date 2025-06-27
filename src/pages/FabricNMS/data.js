@@ -1,6 +1,6 @@
 export const deviceProfiles = {
-  "Force10-S6000": {
-    name: "Force10-S6000",
+  "SKU-Test": {
+    name: "SKU-Test",
     vendor: "virtual",
     platform: "x86_dell_s5224f_vm",
     interfaces: {

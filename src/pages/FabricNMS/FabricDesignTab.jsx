@@ -1103,10 +1103,30 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
   const createFabric = async () => {
     try {
       const nodeSpecData = generateNodeSpec();
-      const fabricSpecPayload = nodeSpecData.nodeSpec;
+
+      const fabricSpecPayload = {
+        name: networkIntent.fabricInfo.fabricName,
+        site: networkIntent.fabricInfo.site,
+
+        nodeSpec: nodeSpecData.nodeSpec,
+
+        IPSpec: {},
+      };
+
+      Object.entries(networkIntent.ipPools).forEach(([key, value]) => {
+        fabricSpecPayload.IPSpec[key] = {
+          name: key,
+          v4: {
+            prefixes: [value],
+          },
+          v6: {},
+        };
+      });
+
+      console.log("Sending fabric payload:", fabricSpecPayload);
 
       const skuName = networkIntent.deviceConfig.spine;
-      const skuPayload = deviceProfiles[skuName];
+      const skuPayload = deviceProfiles["SKU-Test"];
 
       if (!skuPayload) {
         throw new Error(`SKU data not found for ${skuName}`);
@@ -1149,6 +1169,7 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
         fabricResponse: fabricResponse.data,
       };
     } catch (error) {
+      console.error("Error creating fabric:", error);
       return null;
     }
   };
@@ -2427,6 +2448,11 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
                                 label: "Node Specifications",
                                 icon: Network,
                               },
+                              {
+                                id: "config",
+                                label: "Config Review",
+                                icon: FileText,
+                              },
                             ].map(({ id, label, icon: Icon }) => (
                               <button
                                 key={id}
@@ -2458,7 +2484,7 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
                           </div>
 
                           <div className="p-6">
-                            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto max-h-96 overflow-y-auto">
+                            <div className=" text-black p-4 rounded-lg font-mono text-sm overflow-x-auto max-h-96 overflow-y-auto">
                               <pre>
                                 {activePreviewTab === "device" &&
                                   JSON.stringify(
@@ -2474,6 +2500,561 @@ const IntentBasedNetworkDesigner = ({ formData }) => {
                                     null,
                                     2
                                   )}
+                                {activePreviewTab === "config" && (
+                                  <div className="space-y-6">
+                                    {generatedConfig &&
+                                      generatedConfig.validation && (
+                                        <div
+                                          className={`p-4 rounded-lg border ${
+                                            generatedConfig.validation.isValid
+                                              ? "bg-green-50 border-green-200"
+                                              : "bg-red-50 border-red-200"
+                                          }`}
+                                        >
+                                          <h5
+                                            className={`font-semibold mb-2 flex items-center gap-2 ${
+                                              generatedConfig.validation.isValid
+                                                ? "text-green-900"
+                                                : "text-red-900"
+                                            }`}
+                                          >
+                                            {generatedConfig.validation.isValid
+                                              ? "✅"
+                                              : "❌"}
+                                            Fabric Cohesion Validation
+                                          </h5>
+                                          <div
+                                            className={`text-sm ${
+                                              generatedConfig.validation.isValid
+                                                ? "text-green-700"
+                                                : "text-red-700"
+                                            }`}
+                                          >
+                                            {generatedConfig.validation
+                                              .isValid ? (
+                                              <p>
+                                                All node roles are properly
+                                                connected according to the
+                                                topology generation
+                                                requirements.
+                                              </p>
+                                            ) : (
+                                              <div>
+                                                <p className="mb-2">
+                                                  Connectivity issues detected:
+                                                </p>
+                                                <ul className="list-disc list-inside space-y-1">
+                                                  {generatedConfig.validation.issues.map(
+                                                    (issue, idx) => (
+                                                      <li key={idx}>{issue}</li>
+                                                    )
+                                                  )}
+                                                </ul>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                      <div>
+                                        <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+                                          <div className="bg-gradient-to-r from-green-50 to-blue-50 px-4 py-3 border-b">
+                                            <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                              <Info className="w-4 h-4 text-blue-500" />
+                                              Fabric Summary
+                                            </h4>
+                                          </div>
+                                          <div className="p-4">
+                                            <dl className="divide-y">
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Fabric Name
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {
+                                                    networkIntent.fabricInfo
+                                                      .fabricName
+                                                  }
+                                                </dd>
+                                              </div>
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Site
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {
+                                                    networkIntent.fabricInfo
+                                                      .site
+                                                  }
+                                                </dd>
+                                              </div>
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Topology
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {networkIntent.superspineEnabled
+                                                    ? "Three-Tier (with Superspine)"
+                                                    : "Spine-Leaf"}
+                                                </dd>
+                                              </div>
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  BGP ASN
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {networkIntent.commonASN}
+                                                </dd>
+                                              </div>
+                                            </dl>
+                                          </div>
+                                        </div>
+
+                                        <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+                                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b">
+                                            <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                              <Network className="w-4 h-4 text-blue-500" />
+                                              Infrastructure
+                                            </h4>
+                                          </div>
+                                          <div className="p-4">
+                                            <dl className="divide-y">
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Spine Nodes
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {networkIntent.spineCount}
+                                                </dd>
+                                              </div>
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Racks
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {networkIntent.racks.length}
+                                                </dd>
+                                              </div>
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Total Leaf Nodes
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {networkIntent.racks.reduce(
+                                                    (sum, rack) =>
+                                                      sum + rack.leafCount,
+                                                    0
+                                                  )}
+                                                </dd>
+                                              </div>
+                                              {networkIntent.superspineEnabled && (
+                                                <div className="grid grid-cols-3 py-3">
+                                                  <dt className="text-sm font-medium text-gray-500">
+                                                    Superspine Nodes
+                                                  </dt>
+                                                  <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                    1
+                                                  </dd>
+                                                </div>
+                                              )}
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Generic Nodes
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {networkIntent.racks
+                                                    .filter(
+                                                      (r) => r.hasGenericNodes
+                                                    )
+                                                    .reduce(
+                                                      (sum, rack) =>
+                                                        sum +
+                                                        (rack.hasGenericNodes
+                                                          ? rack.genericNodeCount
+                                                          : 0),
+                                                      0
+                                                    )}
+                                                </dd>
+                                              </div>
+                                            </dl>
+                                          </div>
+                                        </div>
+
+                                        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+                                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 border-b">
+                                            <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                              <Settings className="w-4 h-4 text-purple-500" />
+                                              Device Configuration
+                                            </h4>
+                                          </div>
+                                          <div className="p-4">
+                                            <dl className="divide-y">
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Spine
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {
+                                                    networkIntent.deviceConfig
+                                                      .spine
+                                                  }
+                                                </dd>
+                                              </div>
+                                              <div className="grid grid-cols-3 py-3">
+                                                <dt className="text-sm font-medium text-gray-500">
+                                                  Leaf
+                                                </dt>
+                                                <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                  {
+                                                    networkIntent.deviceConfig
+                                                      .leaf
+                                                  }
+                                                </dd>
+                                              </div>
+                                              {networkIntent.superspineEnabled && (
+                                                <div className="grid grid-cols-3 py-3">
+                                                  <dt className="text-sm font-medium text-gray-500">
+                                                    Superspine
+                                                  </dt>
+                                                  <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                    {
+                                                      networkIntent.deviceConfig
+                                                        .superspine
+                                                    }
+                                                  </dd>
+                                                </div>
+                                              )}
+                                              {networkIntent.racks.some(
+                                                (r) => r.hasGenericNodes
+                                              ) && (
+                                                <div className="grid grid-cols-3 py-3">
+                                                  <dt className="text-sm font-medium text-gray-500">
+                                                    Generic Node
+                                                  </dt>
+                                                  <dd className="text-sm text-gray-900 col-span-2 text-right">
+                                                    {
+                                                      networkIntent.deviceConfig
+                                                        .genericNode
+                                                    }
+                                                  </dd>
+                                                </div>
+                                              )}
+                                            </dl>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+                                        <div className="bg-gradient-to-r from-blue-50 to-green-50 px-4 py-3 border-b">
+                                          <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                            <Network className="w-4 h-4 text-green-500" />
+                                            Network Topology Overview
+                                          </h4>
+                                        </div>
+                                        <div className="p-6 bg-gray-50">
+                                          <div className="text-center space-y-8">
+                                            {networkIntent.superspineEnabled && (
+                                              <div className="flex justify-center">
+                                                <div className="bg-purple-100 px-6 py-3 rounded-lg border border-purple-200 shadow-sm">
+                                                  <div className="text-purple-800 font-medium">
+                                                    Superspine Layer
+                                                  </div>
+                                                  <div className="text-purple-600 text-sm mt-1">
+                                                    {
+                                                      networkIntent.deviceConfig
+                                                        .superspine
+                                                    }
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            )}
+
+                                            <div>
+                                              <div className="flex justify-center gap-4">
+                                                {Array.from({
+                                                  length:
+                                                    networkIntent.spineCount,
+                                                }).map((_, i) => (
+                                                  <div
+                                                    key={i}
+                                                    className="bg-blue-100 px-4 py-2 rounded-lg border border-blue-200 shadow-sm"
+                                                  >
+                                                    <div className="text-blue-800 font-medium">
+                                                      Spine-{i + 1}
+                                                    </div>
+                                                    <div className="text-blue-600 text-xs">
+                                                      {
+                                                        networkIntent
+                                                          .deviceConfig.spine
+                                                      }
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                              <div className="h-6 border-r border-dashed border-blue-300 mx-auto w-0 my-2"></div>
+                                            </div>
+
+                                            <div className="flex flex-wrap justify-center gap-6">
+                                              {networkIntent.racks.map(
+                                                (rack, i) => (
+                                                  <div
+                                                    key={i}
+                                                    className="text-center flex flex-col items-center"
+                                                  >
+                                                    <div className="bg-green-100 px-4 py-2 w-40 rounded-lg shadow-sm border border-green-200">
+                                                      <div className="text-green-800 font-medium">
+                                                        {rack.name}
+                                                      </div>
+                                                    </div>
+                                                    <div className="h-4 border-r border-dashed border-green-300 mx-auto w-0 my-1"></div>
+                                                    <div className="space-y-2">
+                                                      {Array.from({
+                                                        length: rack.leafCount,
+                                                      }).map((_, j) => (
+                                                        <div
+                                                          key={j}
+                                                          className="bg-green-50 px-4 py-1 w-32 rounded border border-green-200 shadow-sm"
+                                                        >
+                                                          <div className="text-green-800 text-sm font-medium">
+                                                            Leaf-{j + 1}
+                                                          </div>
+                                                          <div className="text-green-600 text-xs">
+                                                            {
+                                                              networkIntent
+                                                                .deviceConfig
+                                                                .leaf
+                                                            }
+                                                          </div>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                    {rack.hasGenericNodes && (
+                                                      <>
+                                                        <div className="h-4 border-r border-dashed border-yellow-300 mx-auto w-0 my-1"></div>
+                                                        <div className="bg-yellow-50 px-4 py-2 w-36 rounded-lg border border-yellow-200 shadow-sm">
+                                                          <div className="text-yellow-800 font-medium">
+                                                            Generic Nodes
+                                                          </div>
+                                                          <div className="text-yellow-600 text-xs">
+                                                            {
+                                                              rack.genericNodeCount
+                                                            }{" "}
+                                                            nodes •{" "}
+                                                            {
+                                                              rack.genericNodeConnections
+                                                            }{" "}
+                                                            connections each
+                                                          </div>
+                                                        </div>
+                                                      </>
+                                                    )}
+                                                  </div>
+                                                )
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+                                      <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3 border-b">
+                                        <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                          <RefreshCw className="w-4 h-4 text-amber-500" />
+                                          Link Configuration Summary
+                                        </h4>
+                                      </div>
+                                      <div className="p-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                                            <h6 className="font-medium text-blue-800 mb-2">
+                                              Spine ↔ Leaf Links
+                                            </h6>
+                                            <div className="text-sm">
+                                              <div className="flex justify-between py-1 text-blue-700">
+                                                <span>Spine to Leaf:</span>
+                                                <span className="font-medium">
+                                                  {
+                                                    networkIntent.linkConfig
+                                                      .spineToLeaf
+                                                  }
+                                                </span>
+                                              </div>
+                                              <div className="flex justify-between py-1 text-blue-700">
+                                                <span>Leaf to Spine:</span>
+                                                <span className="font-medium">
+                                                  {
+                                                    networkIntent.linkConfig
+                                                      .leafToSpine
+                                                  }
+                                                </span>
+                                              </div>
+                                              <div className="flex justify-between py-1 mt-2 pt-2 border-t border-blue-200 text-blue-800 font-medium">
+                                                <span>Total Links:</span>
+                                                <span>
+                                                  {networkIntent.spineCount *
+                                                    networkIntent.racks.reduce(
+                                                      (sum, rack) =>
+                                                        sum + rack.leafCount,
+                                                      0
+                                                    ) *
+                                                    networkIntent.linkConfig
+                                                      .spineToLeaf}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          {networkIntent.superspineEnabled && (
+                                            <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                                              <h6 className="font-medium text-purple-800 mb-2">
+                                                Spine ↔ Superspine Links
+                                              </h6>
+                                              <div className="text-sm">
+                                                <div className="flex justify-between py-1 text-purple-700">
+                                                  <span>Links per Spine:</span>
+                                                  <span className="font-medium">
+                                                    {
+                                                      networkIntent.linkConfig
+                                                        .spineToSuperspine
+                                                    }
+                                                  </span>
+                                                </div>
+                                                <div className="flex justify-between py-1 mt-2 pt-2 border-t border-purple-200 text-purple-800 font-medium">
+                                                  <span>Total Links:</span>
+                                                  <span>
+                                                    {networkIntent.spineCount *
+                                                      networkIntent.linkConfig
+                                                        .spineToSuperspine}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {networkIntent.racks.some(
+                                            (r) => r.hasGenericNodes
+                                          ) && (
+                                            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-100">
+                                              <h6 className="font-medium text-yellow-800 mb-2">
+                                                Generic Node Connections
+                                              </h6>
+                                              <div className="text-sm">
+                                                {networkIntent.racks
+                                                  .filter(
+                                                    (r) => r.hasGenericNodes
+                                                  )
+                                                  .map((rack, i) => (
+                                                    <div
+                                                      key={i}
+                                                      className="flex justify-between py-1 text-yellow-700"
+                                                    >
+                                                      <span>{rack.name}:</span>
+                                                      <span className="font-medium">
+                                                        {rack.genericNodeCount *
+                                                          rack.genericNodeConnections}{" "}
+                                                        links
+                                                      </span>
+                                                    </div>
+                                                  ))}
+                                                <div className="flex justify-between py-1 mt-2 pt-2 border-t border-yellow-200 text-yellow-800 font-medium">
+                                                  <span>
+                                                    Total Generic Links:
+                                                  </span>
+                                                  <span>
+                                                    {networkIntent.racks
+                                                      .filter(
+                                                        (r) => r.hasGenericNodes
+                                                      )
+                                                      .reduce(
+                                                        (sum, r) =>
+                                                          sum +
+                                                          r.genericNodeCount *
+                                                            r.genericNodeConnections,
+                                                        0
+                                                      )}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* IP Pool Summary */}
+                                    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+                                      <div className="bg-gradient-to-r from-teal-50 to-cyan-50 px-4 py-3 border-b">
+                                        <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                          <Copy className="w-4 h-4 text-teal-500" />
+                                          IP Pool Summary
+                                        </h4>
+                                      </div>
+                                      <div className="p-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                          {networkIntent.superspineEnabled && (
+                                            <div className="bg-cyan-50 rounded p-3 border border-cyan-100">
+                                              <div className="text-xs font-medium text-cyan-500 mb-1">
+                                                SUPERSPINE_LOOPBACK
+                                              </div>
+                                              <div className="text-sm font-medium text-cyan-900">
+                                                {
+                                                  networkIntent.ipPools
+                                                    .SUPERSPINE_LOOPBACK
+                                                }
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          <div className="bg-blue-50 rounded p-3 border border-blue-100">
+                                            <div className="text-xs font-medium text-blue-500 mb-1">
+                                              SPINE_LOOPBACK
+                                            </div>
+                                            <div className="text-sm font-medium text-blue-900">
+                                              {
+                                                networkIntent.ipPools
+                                                  .SPINE_LOOPBACK
+                                              }
+                                            </div>
+                                          </div>
+
+                                          {networkIntent.racks.map((rack) => (
+                                            <div
+                                              key={rack.name}
+                                              className="bg-green-50 rounded p-3 border border-green-100"
+                                            >
+                                              <div className="text-xs font-medium text-green-500 mb-1">{`${rack.name}_LOOPBACK`}</div>
+                                              <div className="text-sm font-medium text-green-900">
+                                                {
+                                                  networkIntent.ipPools[
+                                                    `${rack.name}_LOOPBACK`
+                                                  ]
+                                                }
+                                              </div>
+                                            </div>
+                                          ))}
+
+                                          {networkIntent.racks.some(
+                                            (r) => r.hasGenericNodes
+                                          ) && (
+                                            <div className="bg-yellow-50 rounded p-3 border border-yellow-100">
+                                              <div className="text-xs font-medium text-yellow-500 mb-1">
+                                                GENERIC_NODE_LOOPBACK
+                                              </div>
+                                              <div className="text-sm font-medium text-yellow-900">
+                                                {
+                                                  networkIntent.ipPools
+                                                    .GENERIC_NODE_LOOPBACK
+                                                }
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </pre>
                             </div>
 
