@@ -6,10 +6,10 @@ import {
   BarChart3,
   Settings,
   RefreshCw,
+  Play,
 } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import NodeProfileJson from "../../Helpers/nodeProfile.json";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -18,6 +18,8 @@ const NetworkTopologyApp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [topologyData, setTopologyData] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [availableTopologies, setAvailableTopologies] = useState([]);
+  const [selectedTopology, setSelectedTopology] = useState("");
 
   const [nodes, setNodes] = useState({});
   const [connections, setConnections] = useState([]);
@@ -41,30 +43,79 @@ const NetworkTopologyApp = () => {
   const [showTelemetry, setShowTelemetry] = useState(false);
   const [nodeProfile, setNodeProfile] = useState(false);
 
+  useEffect(() => {
+    const fetchAvailableTopologies = async () => {
+      try {
+        const response = await axios.get(
+          `/get-api/fabric/v1.0.0/topology/getAll`
+        );
+        if (response && response.data && response.data.length > 0) {
+          setAvailableTopologies(response.data);
+
+          const firstTopology = response.data[0].name;
+          setSelectedTopology(firstTopology);
+          fetchTopologyData(firstTopology);
+        }
+      } catch (error) {
+        console.error("Error fetching available topologies:", error);
+        toast.error("Failed to load available topologies");
+      }
+    };
+
+    fetchAvailableTopologies();
+  }, []);
+
+  useEffect(() => {
+    if (selectedTopology) {
+      const savedTelemetryState = localStorage.getItem(
+        "topologyTelemetryState"
+      );
+      if (savedTelemetryState) {
+        const telemetryState = JSON.parse(savedTelemetryState);
+        if (telemetryState[selectedTopology]) {
+          setNodeProfile(true);
+        }
+      }
+    }
+  }, [selectedTopology]);
+
   const startTelemetry = async () => {
+    if (!selectedTopology) {
+      toast.warning("Please select a topology first");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await axios.post(`/api/telemetry/start/Telemetry-Topology`);
+      const response = await axios.post(
+        `/api/telemetry/start/${selectedTopology}`
+      );
       if (response && response.status === 200) {
-        fetchTopologyData();
         toast.success("Telemetry started successfully!");
         setNodeProfile(true);
+
+        const savedState = localStorage.getItem("topologyTelemetryState");
+        const telemetryState = savedState ? JSON.parse(savedState) : {};
+        telemetryState[selectedTopology] = true;
+        localStorage.setItem(
+          "topologyTelemetryState",
+          JSON.stringify(telemetryState)
+        );
       }
     } catch (error) {
-      console.error("Error fetching telemetry:", error);
+      console.error("Error starting telemetry:", error);
       toast.error("Failed to start telemetry!");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchTopologyData = async () => {
+  const fetchTopologyData = async (topologyName) => {
+    setIsLoading(true);
+    setSelectedTopology(topologyName);
     try {
-      // const response = await axios.get(
-      //   `/api/fabric/v1.0.0/ConnectionMatrix/Multi-Vendor-Fabric-Spec-01`
-      // );
       const response = await axios.get(
-        `/api/fabric/v1.0.0/ConnectionMatrix/Telemetry-Topology`
+        `/api/fabric/v1.0.0/ConnectionMatrix/${topologyName}`
       );
       const data = response.data;
       const matrixApi = data.response.resource.matrix;
@@ -72,12 +123,26 @@ const NetworkTopologyApp = () => {
       setTopologyData(matrixApi);
       setIsSuccess(true);
       setShowTelemetry(true);
+
+      const savedState = localStorage.getItem("topologyTelemetryState");
+      if (savedState) {
+        const telemetryState = JSON.parse(savedState);
+        if (telemetryState[topologyName]) {
+          setNodeProfile(true);
+        } else {
+          setNodeProfile(false);
+        }
+      } else {
+        setNodeProfile(false);
+      }
     } catch (error) {
       console.error("Error fetching topology data:", error);
+      toast.error(`Failed to load topology: ${topologyName}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Update container dimensions when topology ref changes
   useEffect(() => {
     const updateDimensions = () => {
       if (topologyRef.current) {
@@ -94,7 +159,6 @@ const NetworkTopologyApp = () => {
 
   const rawData = `${topologyData}`;
 
-  // Helper function to get node styling based on type
   const getNodeStyling = (nodeType) => {
     switch (nodeType) {
       case "superspine":
@@ -110,14 +174,12 @@ const NetworkTopologyApp = () => {
     }
   };
 
-  // Multivendor
   const parseData = useCallback(() => {
     const lines = rawData.split("\n").filter((line) => line.trim() !== "");
     const parsedNodes = {};
     const parsedConnections = [];
     const uniqueConnections = new Map();
 
-    // Helper function to determine node type
     const getNodeType = (deviceName) => {
       if (deviceName.includes("superspine")) return "superspine";
       if (deviceName.includes("spine") && !deviceName.includes("superspine"))
@@ -130,7 +192,6 @@ const NetworkTopologyApp = () => {
     console.log(`Parsing ${lines.length} lines of topology data`);
 
     lines.forEach((line, index) => {
-      // More flexible regex pattern
       const match = line.match(/^(.+?)\s+(\S+)\s+<--->\s+(.+?)\s+(\S+)$/);
 
       if (match) {
@@ -138,7 +199,6 @@ const NetworkTopologyApp = () => {
         const dev1 = dev1Raw.trim();
         const dev2 = dev2Raw.trim();
 
-        // Add nodes
         if (!parsedNodes[dev1]) {
           parsedNodes[dev1] = {
             name: dev1,
@@ -156,7 +216,6 @@ const NetworkTopologyApp = () => {
           };
         }
 
-        // Create connection key (alphabetical order for consistency)
         const sortedDevices = [dev1, dev2].sort();
         const connectionKey = `${sortedDevices[0]} <--> ${sortedDevices[1]}`;
 
@@ -172,7 +231,6 @@ const NetworkTopologyApp = () => {
           parsedConnections.push(connection);
           uniqueConnections.set(connectionKey, connection);
 
-          // Add to node connections
           if (!parsedNodes[dev1].connections.includes(dev2)) {
             parsedNodes[dev1].connections.push(dev2);
           }
@@ -191,7 +249,6 @@ const NetworkTopologyApp = () => {
       } connections`
     );
 
-    // Log connections involving leaf and server nodes for debugging
     const leafServerConnections = parsedConnections.filter(
       (conn) =>
         (parsedNodes[conn.from]?.type === "leaf" &&
@@ -207,7 +264,6 @@ const NetworkTopologyApp = () => {
     setNodes(parsedNodes);
     setConnections(parsedConnections);
 
-    // Update stats
     const superspineCount = Object.values(parsedNodes).filter(
       (n) => n.type === "superspine"
     ).length;
@@ -231,7 +287,7 @@ const NetworkTopologyApp = () => {
     };
 
     setStats(finalStats);
-    setLayoutApplied(false); // Reset layout applied flag
+    setLayoutApplied(false);
   }, [rawData]);
 
   const applyLayout = useCallback(
@@ -266,10 +322,8 @@ const NetworkTopologyApp = () => {
         switch (layoutType) {
           case "auto":
           case "hierarchical":
-            // Calculate better spacing based on container height
-            const layerHeight = Math.max(120, height / 5); // Ensure minimum spacing
+            const layerHeight = Math.max(120, height / 5);
 
-            // Superspine layer (top)
             superspineNodes.forEach((node, i) => {
               const x = Math.max(
                 60,
@@ -279,7 +333,6 @@ const NetworkTopologyApp = () => {
               updatedNodes[node.name].position = { x, y };
             });
 
-            // Spine layer
             spineNodes.forEach((node, i) => {
               const x = Math.max(
                 60,
@@ -289,7 +342,6 @@ const NetworkTopologyApp = () => {
               updatedNodes[node.name].position = { x, y };
             });
 
-            // Leaf layer
             leafNodes.forEach((node, i) => {
               const x = Math.max(
                 60,
@@ -299,7 +351,6 @@ const NetworkTopologyApp = () => {
               updatedNodes[node.name].position = { x, y };
             });
 
-            // Server layer
             serverNodes.forEach((node, i) => {
               const x = Math.max(
                 60,
@@ -396,21 +447,18 @@ const NetworkTopologyApp = () => {
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // Parse data when topology data changes
   useEffect(() => {
     if (topologyData) {
       parseData();
     }
   }, [topologyData, parseData]);
 
-  // Apply layout when nodes are available and container dimensions are set
   useEffect(() => {
     if (
       Object.keys(nodes).length > 0 &&
       containerDimensions.width > 0 &&
       !layoutApplied
     ) {
-      // Use a longer timeout to ensure DOM is ready
       const timeoutId = setTimeout(() => {
         applyLayout(selectedLayout);
       }, 200);
@@ -419,7 +467,6 @@ const NetworkTopologyApp = () => {
     }
   }, [nodes, containerDimensions, selectedLayout, layoutApplied, applyLayout]);
 
-  // Apply layout when layout type changes
   useEffect(() => {
     if (Object.keys(nodes).length > 0 && containerDimensions.width > 0) {
       applyLayout(selectedLayout);
@@ -429,7 +476,7 @@ const NetworkTopologyApp = () => {
   const topologySpine = async (val) => {
     try {
       const response = await axios.get(`/api/telemetry/device/${val}`);
-      navigate('/telemetry', { state: response.data, fromButtonClick: true });
+      navigate("/telemetry", { state: response.data, fromButtonClick: true });
     } catch (error) {
       console.error("Error fetching telemetry:", error);
     }
@@ -446,7 +493,6 @@ const NetworkTopologyApp = () => {
       return null;
     }
 
-    // Ensure both nodes have valid positions
     if (
       !fromNode.position ||
       !toNode.position ||
@@ -459,12 +505,11 @@ const NetworkTopologyApp = () => {
       return null;
     }
 
-    const fromX = fromNode.position.x + 60; // Center of node
+    const fromX = fromNode.position.x + 60;
     const fromY = fromNode.position.y + 20;
     const toX = toNode.position.x + 60;
     const toY = toNode.position.y + 20;
 
-    // Debug logging for leaf-server connections
     if (
       (fromNode.type === "leaf" && toNode.type === "server") ||
       (fromNode.type === "server" && toNode.type === "leaf")
@@ -528,108 +573,67 @@ const NetworkTopologyApp = () => {
         pauseOnFocusLoss
       />
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Network className="w-10 h-10 text-blue-400 animate-pulse-slow" />
-            <h1 className="text-4xl font-bold gradient-text">
-              Spine-Leaf Mesh Topology
-            </h1>
+          <div className="flex items-center justify-center gap-3 mb-4"></div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-4 mt-16">
+            {availableTopologies.map((topology) => (
+              <button
+                key={topology.name}
+                onClick={() => fetchTopologyData(topology.name)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold ${
+                  selectedTopology === topology.name
+                    ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
+                    : "bg-purple-800 glass-effect hover:bg-white/20"
+                }`}
+              >
+                {topology.name}
+              </button>
+            ))}
           </div>
-          <p className="text-xl text-gray-300">
-            Interactive datacenter fabric visualization
-          </p>
         </div>
 
-        <div className="glass-effect rounded-2xl p-1 mb-0">
-          <div className="flex flex-wrap justify-center gap-4">
-            {!isSuccess && (
-              <button
-                onClick={fetchTopologyData}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
-              >
-                {isLoading ? "Loading..." : "Generate Topology"}
-              </button>
-            )}
-          </div>
+        {selectedTopology && (
+          <div className="glass-effect rounded-2xl p-4 mb-6 relative">
+            <div className="flex flex-wrap justify-between items-center">
+              <h2 className="text-2xl font-bold text-blue-300">
+                {selectedTopology}
+              </h2>
 
-          {/* <div className="flex flex-wrap justify-center gap-4">
-            {showTelemetry && (
-              <button
-                onClick={startTelemetry}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
-              >
-                Start Telemetry
-              </button>
-            )}
-          </div> */}
-
-          <div className="flex flex-wrap justify-center gap-4">
-            {showTelemetry && (
               <button
                 onClick={startTelemetry}
                 disabled={isLoading || nodeProfile}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25 ${
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold bg-gradient-to-r ${
+                  nodeProfile
+                    ? "from-green-500 to-teal-500"
+                    : "from-blue-500 to-purple-500"
+                } shadow-lg ${
                   isLoading || nodeProfile
                     ? "opacity-70 cursor-not-allowed"
                     : ""
                 }`}
+                title={nodeProfile ? "Telemetry Active" : "Start Telemetry"}
               >
-                {isLoading ? "Starting..." : "Start Telemetry"}
+                <Play className="w-5 h-5" />
+                {isLoading
+                  ? "Starting..."
+                  : nodeProfile
+                  ? "Telemetry Active"
+                  : "Start Telemetry"}
               </button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
         {topologyData && (
           <>
-            {/* Controls */}
-            <div className="glass-effect rounded-2xl p-6 mb-8">
-              <div className="flex flex-wrap justify-center gap-4">
-                {[
-                  { id: "auto", label: "Auto Layout", icon: Zap },
-                  {
-                    id: "hierarchical",
-                    label: "Hierarchical",
-                    icon: BarChart3,
-                  },
-                  { id: "circular", label: "Circular", icon: RefreshCw },
-                ].map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setSelectedLayout(id)}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold ${
-                      selectedLayout === id
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
-                        : "glass-effect hover:bg-white/20"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div className="glass-effect rounded-2xl p-6 mb-8"></div>
 
-            {/* Debug Info - Remove in production */}
-            {/* <div className="glass-effect rounded-2xl p-4 mb-4 text-sm">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>Nodes: {Object.keys(nodes).length}</div>
-                <div>Connections: {connections.length}</div>
-                <div>Container: {containerDimensions.width}x{containerDimensions.height}</div>
-                <div>Layout Applied: {layoutApplied ? 'Yes' : 'No'}</div>
-              </div>
-            </div> */}
-
-            {/* Topology Visualization */}
             <div className="glass-effect rounded-2xl p-6 mb-8">
               <div
                 ref={topologyRef}
                 className="relative w-full h-[500px] md:h-[700px] bg-black/20 rounded-xl border-2 border-white/20 overflow-hidden"
               >
-                {/* SVG for connections */}
                 <svg
                   className="absolute inset-0 w-full h-full pointer-events-none"
                   style={{ zIndex: 1 }}
@@ -646,11 +650,9 @@ const NetworkTopologyApp = () => {
                       <stop offset="100%" stopColor="#fcb69f" />
                     </linearGradient>
                   </defs>
-                  {/* Only render connections if layout has been applied and nodes have valid positions */}
                   {layoutApplied && connections.map(renderConnection)}
                 </svg>
 
-                {/* Nodes */}
                 {Object.values(nodes).map((node) => (
                   <div
                     key={node.name}
@@ -670,38 +672,13 @@ const NetworkTopologyApp = () => {
                         {node.type.toUpperCase()}
                       </span>
                     </div>
-                    {/* <div
-                      className="text-xs font-bold cursor-pointer hover:text-yellow-300"
-                      onClick={() => topologySpine(node.name)}
-                      disabled={nodeProfile}
-                    >
-                      {node.name}
-                    </div> */}
-
-                    {/* <div
-                      className={`text-xs font-bold cursor-pointer hover:text-yellow-300 ${
-                        !nodeProfile ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                      onClick={
-                        nodeProfile ? () => topologySpine(node.name) : undefined
-                      }
-                    >
-                      {node.name}
-                    </div> */}
-                    {/* <button
-                      className="text-xs font-bold hover:text-yellow-300 focus:outline-none"
-                      onClick={() => topologySpine(node.name)}
-                      disabled={!nodeProfile}
-                    >
-                      {node.name}
-                    </button> */}
                     <button
                       className={`text-xs font-bold focus:outline-none ${
                         nodeProfile
                           ? "text-current hover:text-yellow-300 cursor-pointer"
                           : "text-gray-400 cursor-not-allowed"
                       }`}
-                      onClick={() => topologySpine(node.name)}
+                      onClick={() => nodeProfile && topologySpine(node.name)}
                       disabled={!nodeProfile}
                     >
                       {node.name}
@@ -710,7 +687,6 @@ const NetworkTopologyApp = () => {
                 ))}
               </div>
 
-              {/* Updated Legend */}
               <div className="flex flex-wrap justify-center gap-6 mt-6">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded border border-white/30 bg-gradient-to-r from-purple-600 to-blue-600"></div>
@@ -735,7 +711,6 @@ const NetworkTopologyApp = () => {
               </div>
             </div>
 
-            {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <StatCard
                 icon={Network}
