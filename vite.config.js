@@ -18,11 +18,26 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
+        // "/api": {
+        //   target: env.VITE_API_URL,
+        //   changeOrigin: true,
+        //   secure: false,
+        //   rewrite: (path) => path.replace(/^\/api/, "/api"),
+        // },
+        "/api/telemetry": {
+          target: env.VITE_TELEMETRY_API_URL,
+          changeOrigin: true,
+          secure: false,
+        },
+        "/api/fabric": {
+          target: env.VITE_API_URL,
+          changeOrigin: true,
+          secure: false,
+        },
         "/api": {
           target: env.VITE_API_URL,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, "/api"),
         },
         "/get-api": {
           target: env.VITE_GET_API_URL,
@@ -31,6 +46,9 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/get-api/, "/api"),
         },
       },
+    },
+     define: {
+      "process.env": env,
     },
   };
 });

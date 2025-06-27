@@ -60,7 +60,7 @@ const Sidebar = ({
       id: "telemetry",
       label: "Telemetry",
       icon: Radio,
-      path: "/telemetry",
+      path: "/spine",
       isActive: false,
     },
     {

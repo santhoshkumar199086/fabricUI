@@ -173,7 +173,7 @@ const StatusBadge = ({ status, type = "default" }) => {
       <div className={`w-2 h-2 rounded-full mr-2 ${
         status === "up" || status === "dynamic" ? "bg-current" : "bg-current opacity-60"
       }`}></div>
-      {status.toUpperCase()}
+      {/* {status.toUpperCase()} */}
     </span>
   );
 };
@@ -200,6 +200,7 @@ const DellArpTable = ({
   timeRange,
   setTimeRange,
 }) => {
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("_time");
   const [sortOrder, setSortOrder] = useState("desc");
@@ -311,16 +312,16 @@ const DellArpTable = ({
                   })}
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  <IpAddress ip={entry["addr"]} />
+                  <IpAddress ip={entry["host_ip"]} />
                 </td>
                 <td className="px-4 py-3 text-sm font-medium text-gray-900">
                   {entry["intf-name"]}
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  <MacAddress mac={entry["link-layer-address"]} />
+                  <MacAddress mac={entry["host"]} />
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  <StatusBadge status={entry["state"]} />
+                  <StatusBadge status={entry["_value"]} />
                 </td>
               </tr>
             ))}

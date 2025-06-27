@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import Login from "../src/pages/Login";
 import ProtectedRoute from "../src/Routes/ProtectedRoute";
@@ -17,6 +19,21 @@ import Spine from "./pages/Telemetry/SpineTelemetry";
 import PalCFabricManager from "./pages/NewFabric";
 import IntentBasedNetworkDesigner from "./pages/FabricNewDesign";
 import FabricConfigTabs from "./pages/FabricNMS/FabricConfig";
+
+// function ProtectedTelemetryRoute() {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     if (!location.state?.fromButtonClick) {
+//       navigate('/spine', { replace: true });
+//     }
+//   }, [location.state, navigate]);
+
+//   return location.state?.fromButtonClick ? <Telemetry /> : null;
+// }
+
+// In your router:
 
 function App() {
   return (
@@ -32,6 +49,8 @@ function App() {
                 <Routes>
                   <Route path="/dashboard" element={<DashboardContent />} />
                   <Route path="/telemetry" element={<Telemetry />} />
+                  {/* <Route path="/telemetry" element={<ProtectedTelemetryRoute />} /> */}
+
                   <Route path="/SKU" element={<SKUManagementApp />} />
                   <Route path="/Fabric" element={<FabricConfigApp />} />
                   <Route path="/PalcFabric" element={<PalCFabricManager />} />

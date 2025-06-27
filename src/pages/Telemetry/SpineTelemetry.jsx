@@ -7,9 +7,18 @@ import {
   Settings,
   RefreshCw,
 } from "lucide-react";
-import axios from 'axios';
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import NodeProfileJson from "../../Helpers/nodeProfile.json";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const NetworkTopologyApp = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [topologyData, setTopologyData] = useState(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const [nodes, setNodes] = useState({});
   const [connections, setConnections] = useState([]);
   const [selectedLayout, setSelectedLayout] = useState("auto");
@@ -17,6 +26,11 @@ const NetworkTopologyApp = () => {
   const [dragNode, setDragNode] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hoveredConnection, setHoveredConnection] = useState(null);
+  const [layoutApplied, setLayoutApplied] = useState(false);
+  const [containerDimensions, setContainerDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
   const [stats, setStats] = useState({
     nodes: 0,
     connections: 0,
@@ -24,56 +38,111 @@ const NetworkTopologyApp = () => {
     leaf: 0,
   });
   const topologyRef = useRef(null);
-  const rawData = `blore-leaf-002 Ethernet1/1/2 <---> blore-spine-001 Ethernet1/1/2
-    blore-leaf-002 Ethernet1/1/3 <---> blore-spine-002 Ethernet1/1/2
-    blore-spine-001 Ethernet1/1/1 <---> blore-leaf-001 Ethernet1/1/2
-    blore-spine-001 Ethernet1/1/2 <---> blore-leaf-002 Ethernet1/1/2
-    blore-spine-001 Ethernet1/1/3 <---> blore-leaf-003 Ethernet1/1/2
-    blore-spine-001 Ethernet1/1/4 <---> blore-leaf-004 Ethernet1/1/2
-    blore-leaf-004 Ethernet1/1/2 <---> blore-spine-001 Ethernet1/1/4
-    blore-leaf-004 Ethernet1/1/3 <---> blore-spine-002 Ethernet1/1/4
-    blore-spine-002 Ethernet1/1/1 <---> blore-leaf-001 Ethernet1/1/3
-    blore-spine-002 Ethernet1/1/2 <---> blore-leaf-002 Ethernet1/1/3
-    blore-spine-002 Ethernet1/1/3 <---> blore-leaf-003 Ethernet1/1/3
-    blore-spine-002 Ethernet1/1/4 <---> blore-leaf-004 Ethernet1/1/3
-    blore-leaf-001 Ethernet1/1/2 <---> blore-spine-001 Ethernet1/1/1
-    blore-leaf-001 Ethernet1/1/3 <---> blore-spine-002 Ethernet1/1/1
-    blore-leaf-003 Ethernet1/1/2 <---> blore-spine-001 Ethernet1/1/3
-    blore-leaf-003 Ethernet1/1/3 <---> blore-spine-002 Ethernet1/1/3`;
+  const [showTelemetry, setShowTelemetry] = useState(false);
+  const [nodeProfile, setNodeProfile] = useState(false);
 
-     /*const rawData = `demo-1-red-leaf-002 Ethernet1/1/2 <---> demo-1-spine-002 Ethernet1/1/4
-demo-1-spine-002 Ethernet1/1/2 <---> demo-1-blue-leaf-002 Ethernet1/1/2
-demo-1-spine-002 Ethernet1/1/4 <---> demo-1-red-leaf-002 Ethernet1/1/2
-demo-1-spine-002 Ethernet1/1/1 <---> demo-1-superspine-001 Ethernet4
-demo-1-spine-002 demo-1-spine-002-SPINE_TO_SUPERSPINE-1 <---> demo-1-superspine-002 Ethernet4
-demo-1-spine-001 Ethernet1/1/2 <---> demo-1-blue-leaf-001 Ethernet1/1/2
-demo-1-spine-001 Ethernet1/1/4 <---> demo-1-red-leaf-001 Ethernet1/1/2
-demo-1-spine-001 Ethernet1/1/1 <---> demo-1-superspine-001 Ethernet0
-demo-1-spine-001 demo-1-spine-001-SPINE_TO_SUPERSPINE-1 <---> demo-1-superspine-002 Ethernet0
-demo-1-superspine-002 Ethernet0 <---> demo-1-spine-001 demo-1-spine-001-SPINE_TO_SUPERSPINE-1
-demo-1-superspine-002 Ethernet4 <---> demo-1-spine-002 demo-1-spine-002-SPINE_TO_SUPERSPINE-1
-demo-1-blue-leaf-001 Ethernet1/1/2 <---> demo-1-spine-001 Ethernet1/1/2
-demo-1-superspine-001 Ethernet0 <---> demo-1-spine-001 Ethernet1/1/1
-demo-1-superspine-001 Ethernet4 <---> demo-1-spine-002 Ethernet1/1/1
-demo-1-blue-leaf-002 Ethernet1/1/2 <---> demo-1-spine-002 Ethernet1/1/2
-demo-1-red-leaf-001 Ethernet1/1/2 <---> demo-1-spine-001 Ethernet1/1/4`;*/
+  const startTelemetry = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`/api/telemetry/start/Telemetry-Topology`);
+      if (response && response.status === 200) {
+        fetchTopologyData();
+        toast.success("Telemetry started successfully!");
+        setNodeProfile(true);
+      }
+    } catch (error) {
+      console.error("Error fetching telemetry:", error);
+      toast.error("Failed to start telemetry!");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const fetchTopologyData = async () => {
+    try {
+      // const response = await axios.get(
+      //   `/api/fabric/v1.0.0/ConnectionMatrix/Multi-Vendor-Fabric-Spec-01`
+      // );
+      const response = await axios.get(
+        `/api/fabric/v1.0.0/ConnectionMatrix/Telemetry-Topology`
+      );
+      const data = response.data;
+      const matrixApi = data.response.resource.matrix;
+
+      setTopologyData(matrixApi);
+      setIsSuccess(true);
+      setShowTelemetry(true);
+    } catch (error) {
+      console.error("Error fetching topology data:", error);
+    }
+  };
+
+  // Update container dimensions when topology ref changes
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (topologyRef.current) {
+        const { clientWidth, clientHeight } = topologyRef.current;
+        setContainerDimensions({ width: clientWidth, height: clientHeight });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, [topologyData]);
+
+  const rawData = `${topologyData}`;
+
+  // Helper function to get node styling based on type
+  const getNodeStyling = (nodeType) => {
+    switch (nodeType) {
+      case "superspine":
+        return "bg-gradient-to-r from-purple-600 to-blue-600";
+      case "spine":
+        return "bg-gradient-to-r from-blue-500 to-purple-500";
+      case "leaf":
+        return "bg-gradient-to-r from-green-500 to-teal-500";
+      case "server":
+        return "bg-gradient-to-r from-orange-500 to-red-500";
+      default:
+        return "bg-gradient-to-r from-gray-500 to-gray-600";
+    }
+  };
+
+  // Multivendor
   const parseData = useCallback(() => {
-    const lines = rawData.split("\n");
+    const lines = rawData.split("\n").filter((line) => line.trim() !== "");
     const parsedNodes = {};
     const parsedConnections = [];
-    const uniqueConnections = new Set();
+    const uniqueConnections = new Map();
 
-    lines.forEach((line) => {
-      const match = line.match(/(.+?)\s+(\S+)\s+<--->\s+(.+?)\s+(\S+)/);
+    // Helper function to determine node type
+    const getNodeType = (deviceName) => {
+      if (deviceName.includes("superspine")) return "superspine";
+      if (deviceName.includes("spine") && !deviceName.includes("superspine"))
+        return "spine";
+      if (deviceName.includes("leaf")) return "leaf";
+      if (deviceName.includes("generic-node")) return "server";
+      return "unknown";
+    };
+
+    console.log(`Parsing ${lines.length} lines of topology data`);
+
+    lines.forEach((line, index) => {
+      // More flexible regex pattern
+      const match = line.match(/^(.+?)\s+(\S+)\s+<--->\s+(.+?)\s+(\S+)$/);
+
       if (match) {
-        const [, dev1, port1, dev2, port2] = match;
+        const [fullMatch, dev1Raw, port1, dev2Raw, port2] = match;
+        const dev1 = dev1Raw.trim();
+        const dev2 = dev2Raw.trim();
 
         // Add nodes
         if (!parsedNodes[dev1]) {
           parsedNodes[dev1] = {
             name: dev1,
-            type: dev1.includes("spine") ? "spine" : "leaf",
+            type: getNodeType(dev1),
             position: { x: 0, y: 0 },
             connections: [],
           };
@@ -81,104 +150,196 @@ demo-1-red-leaf-001 Ethernet1/1/2 <---> demo-1-spine-001 Ethernet1/1/4`;*/
         if (!parsedNodes[dev2]) {
           parsedNodes[dev2] = {
             name: dev2,
-            type: dev2.includes("spine") ? "spine" : "leaf",
+            type: getNodeType(dev2),
             position: { x: 0, y: 0 },
             connections: [],
           };
         }
 
-        // Add unique connections
-        const connKey1 = `${dev1}-${dev2}`;
-        const connKey2 = `${dev2}-${dev1}`;
-        if (
-          !uniqueConnections.has(connKey1) &&
-          !uniqueConnections.has(connKey2)
-        ) {
-          parsedConnections.push({
-            id: connKey1,
+        // Create connection key (alphabetical order for consistency)
+        const sortedDevices = [dev1, dev2].sort();
+        const connectionKey = `${sortedDevices[0]} <--> ${sortedDevices[1]}`;
+
+        if (!uniqueConnections.has(connectionKey)) {
+          const connection = {
+            id: `conn_${parsedConnections.length}`,
             from: dev1,
             to: dev2,
             fromPort: port1,
             toPort: port2,
-          });
-          uniqueConnections.add(connKey1);
+          };
 
-          parsedNodes[dev1].connections.push(dev2);
-          parsedNodes[dev2].connections.push(dev1);
+          parsedConnections.push(connection);
+          uniqueConnections.set(connectionKey, connection);
+
+          // Add to node connections
+          if (!parsedNodes[dev1].connections.includes(dev2)) {
+            parsedNodes[dev1].connections.push(dev2);
+          }
+          if (!parsedNodes[dev2].connections.includes(dev1)) {
+            parsedNodes[dev2].connections.push(dev1);
+          }
         }
+      } else {
+        console.warn(`Failed to parse line ${index + 1}: ${line}`);
       }
     });
+
+    console.log(
+      `Parsed ${Object.keys(parsedNodes).length} nodes and ${
+        parsedConnections.length
+      } connections`
+    );
+
+    // Log connections involving leaf and server nodes for debugging
+    const leafServerConnections = parsedConnections.filter(
+      (conn) =>
+        (parsedNodes[conn.from]?.type === "leaf" &&
+          parsedNodes[conn.to]?.type === "server") ||
+        (parsedNodes[conn.from]?.type === "server" &&
+          parsedNodes[conn.to]?.type === "leaf")
+    );
+    console.log(
+      `Found ${leafServerConnections.length} leaf-server connections:`,
+      leafServerConnections
+    );
+
     setNodes(parsedNodes);
     setConnections(parsedConnections);
 
     // Update stats
+    const superspineCount = Object.values(parsedNodes).filter(
+      (n) => n.type === "superspine"
+    ).length;
     const spineCount = Object.values(parsedNodes).filter(
       (n) => n.type === "spine"
     ).length;
     const leafCount = Object.values(parsedNodes).filter(
       (n) => n.type === "leaf"
     ).length;
-    setStats({
+    const serverCount = Object.values(parsedNodes).filter(
+      (n) => n.type === "server"
+    ).length;
+
+    const finalStats = {
       nodes: Object.keys(parsedNodes).length,
       connections: parsedConnections.length,
+      superspine: superspineCount,
       spine: spineCount,
       leaf: leafCount,
-    });
+      servers: serverCount,
+    };
+
+    setStats(finalStats);
+    setLayoutApplied(false); // Reset layout applied flag
   }, [rawData]);
 
-  const applyLayout = useCallback((layoutType) => {
-    if (!topologyRef.current) return;
-
-    const container = topologyRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
-    setNodes((currentNodes) => {
-      // Check if nodes exist
-      if (Object.keys(currentNodes).length === 0) return currentNodes;
-
-      const spineNodes = Object.values(currentNodes).filter(
-        (n) => n.type === "spine"
-      );
-      const leafNodes = Object.values(currentNodes).filter(
-        (n) => n.type === "leaf"
-      );
-      const updatedNodes = { ...currentNodes };
-
-      switch (layoutType) {
-        case "auto":
-        case "hierarchical":
-          spineNodes.forEach((node, i) => {
-            const x = (width / (spineNodes.length + 1)) * (i + 1) - 60;
-            updatedNodes[node.name].position = { x, y: 80 };
-          });
-
-          leafNodes.forEach((node, i) => {
-            const x = (width / (leafNodes.length + 1)) * (i + 1) - 60;
-            updatedNodes[node.name].position = {
-              x,
-              y: layoutType === "auto" ? 400 : 450,
-            };
-          });
-          break;
-        case "circular":
-          const centerX = width / 2;
-          const centerY = height / 2;
-          const radius = Math.min(width, height) / 3;
-          const allNodes = Object.values(currentNodes);
-
-          allNodes.forEach((node, i) => {
-            const angle = (2 * Math.PI * i) / allNodes.length;
-            const x = centerX + radius * Math.cos(angle) - 60;
-            const y = centerY + radius * Math.sin(angle) - 20;
-            updatedNodes[node.name].position = { x, y };
-          });
-          break;
+  const applyLayout = useCallback(
+    (layoutType) => {
+      if (
+        !containerDimensions.width ||
+        !containerDimensions.height ||
+        Object.keys(nodes).length === 0
+      ) {
+        console.log("Cannot apply layout: missing dimensions or nodes");
+        return;
       }
 
-      return updatedNodes;
-    });
-  }, []);
+      const { width, height } = containerDimensions;
+
+      setNodes((currentNodes) => {
+        const superspineNodes = Object.values(currentNodes).filter(
+          (n) => n.type === "superspine"
+        );
+        const spineNodes = Object.values(currentNodes).filter(
+          (n) => n.type === "spine"
+        );
+        const leafNodes = Object.values(currentNodes).filter(
+          (n) => n.type === "leaf"
+        );
+        const serverNodes = Object.values(currentNodes).filter(
+          (n) => n.type === "server"
+        );
+
+        const updatedNodes = { ...currentNodes };
+
+        switch (layoutType) {
+          case "auto":
+          case "hierarchical":
+            // Calculate better spacing based on container height
+            const layerHeight = Math.max(120, height / 5); // Ensure minimum spacing
+
+            // Superspine layer (top)
+            superspineNodes.forEach((node, i) => {
+              const x = Math.max(
+                60,
+                (width / (superspineNodes.length + 1)) * (i + 1) - 60
+              );
+              const y = 30;
+              updatedNodes[node.name].position = { x, y };
+            });
+
+            // Spine layer
+            spineNodes.forEach((node, i) => {
+              const x = Math.max(
+                60,
+                (width / (spineNodes.length + 1)) * (i + 1) - 60
+              );
+              const y = layerHeight;
+              updatedNodes[node.name].position = { x, y };
+            });
+
+            // Leaf layer
+            leafNodes.forEach((node, i) => {
+              const x = Math.max(
+                60,
+                (width / (leafNodes.length + 1)) * (i + 1) - 60
+              );
+              const y = layerHeight * 2;
+              updatedNodes[node.name].position = { x, y };
+            });
+
+            // Server layer
+            serverNodes.forEach((node, i) => {
+              const x = Math.max(
+                60,
+                (width / (serverNodes.length + 1)) * (i + 1) - 60
+              );
+              const y = Math.min(layerHeight * 3.5, height - 80);
+              updatedNodes[node.name].position = { x, y };
+            });
+            break;
+
+          case "circular":
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 3;
+            const allNodes = Object.values(currentNodes);
+
+            allNodes.forEach((node, i) => {
+              const angle = (2 * Math.PI * i) / allNodes.length;
+              const x = centerX + radius * Math.cos(angle) - 60;
+              const y = centerY + radius * Math.sin(angle) - 20;
+              updatedNodes[node.name].position = {
+                x: Math.max(0, x),
+                y: Math.max(0, y),
+              };
+            });
+            break;
+        }
+
+        console.log(
+          `Applied ${layoutType} layout to ${
+            Object.keys(updatedNodes).length
+          } nodes`
+        );
+        return updatedNodes;
+      });
+
+      setLayoutApplied(true);
+    },
+    [containerDimensions, nodes]
+  );
 
   const handleMouseDown = (e, nodeName) => {
     e.preventDefault();
@@ -186,8 +347,6 @@ demo-1-red-leaf-001 Ethernet1/1/2 <---> demo-1-spine-001 Ethernet1/1/4`;*/
     setDragNode(nodeName);
 
     const rect = e.target.getBoundingClientRect();
-    const containerRect = topologyRef.current.getBoundingClientRect();
-
     setDragOffset({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
@@ -237,52 +396,84 @@ demo-1-red-leaf-001 Ethernet1/1/2 <---> demo-1-spine-001 Ethernet1/1/4`;*/
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // Parse data on mount
+  // Parse data when topology data changes
   useEffect(() => {
-    parseData();
-  }, [parseData]);
-
-  // Apply initial layout when nodes are loaded
-  useEffect(() => {
-    if (Object.keys(nodes).length > 0 && topologyRef.current) {
-      // Small delay to ensure container dimensions are available
-      setTimeout(() => {
-        applyLayout(selectedLayout);
-      }, 0);
+    if (topologyData) {
+      parseData();
     }
-  }, [nodes, applyLayout]); // Remove selectedLayout from deps to avoid re-applying on every layout change
+  }, [topologyData, parseData]);
 
-  // Apply layout when selectedLayout changes (for button clicks)
+  // Apply layout when nodes are available and container dimensions are set
   useEffect(() => {
-    if (Object.keys(nodes).length > 0 && topologyRef.current) {
+    if (
+      Object.keys(nodes).length > 0 &&
+      containerDimensions.width > 0 &&
+      !layoutApplied
+    ) {
+      // Use a longer timeout to ensure DOM is ready
+      const timeoutId = setTimeout(() => {
+        applyLayout(selectedLayout);
+      }, 200);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [nodes, containerDimensions, selectedLayout, layoutApplied, applyLayout]);
+
+  // Apply layout when layout type changes
+  useEffect(() => {
+    if (Object.keys(nodes).length > 0 && containerDimensions.width > 0) {
       applyLayout(selectedLayout);
     }
-  }, [selectedLayout, applyLayout]);
+  }, [selectedLayout]);
 
-  const topologySpine = (val) =>{
-    
-
-    axios
-      .get(`http://172.27.1.75:8080/device/${val}`)
-      .then((response) => {
-        console.log("response", response.data); // Handle the response data
-      })
-      .catch((error) => {
-        console.error(error); // Handle errors
-      });
-
-  }
+  const topologySpine = async (val) => {
+    try {
+      const response = await axios.get(`/api/telemetry/device/${val}`);
+      navigate('/telemetry', { state: response.data, fromButtonClick: true });
+    } catch (error) {
+      console.error("Error fetching telemetry:", error);
+    }
+  };
 
   const renderConnection = (connection) => {
     const fromNode = nodes[connection.from];
     const toNode = nodes[connection.to];
 
-    if (!fromNode || !toNode) return null;
+    if (!fromNode || !toNode) {
+      console.warn(
+        `Missing nodes for connection ${connection.id}: ${connection.from} -> ${connection.to}`
+      );
+      return null;
+    }
 
-    const fromX = fromNode.position.x + 60;
+    // Ensure both nodes have valid positions
+    if (
+      !fromNode.position ||
+      !toNode.position ||
+      (fromNode.position.x === 0 &&
+        fromNode.position.y === 0 &&
+        toNode.position.x === 0 &&
+        toNode.position.y === 0)
+    ) {
+      console.warn(`Invalid positions for connection ${connection.id}`);
+      return null;
+    }
+
+    const fromX = fromNode.position.x + 60; // Center of node
     const fromY = fromNode.position.y + 20;
     const toX = toNode.position.x + 60;
     const toY = toNode.position.y + 20;
+
+    // Debug logging for leaf-server connections
+    if (
+      (fromNode.type === "leaf" && toNode.type === "server") ||
+      (fromNode.type === "server" && toNode.type === "leaf")
+    ) {
+      console.log(`Rendering ${fromNode.type}-${toNode.type} connection:`, {
+        from: { name: fromNode.name, x: fromX, y: fromY },
+        to: { name: toNode.name, x: toX, y: toY },
+      });
+    }
 
     return (
       <g key={connection.id}>
@@ -327,6 +518,15 @@ demo-1-red-leaf-001 Ethernet1/1/2 <---> demo-1-spine-001 Ethernet1/1/4`;*/
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white p-6">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        pauseOnFocusLoss
+      />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -341,122 +541,235 @@ demo-1-red-leaf-001 Ethernet1/1/2 <---> demo-1-spine-001 Ethernet1/1/4`;*/
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="glass-effect rounded-2xl p-6 mb-8">
+        <div className="glass-effect rounded-2xl p-1 mb-0">
           <div className="flex flex-wrap justify-center gap-4">
-            {[
-              { id: "auto", label: "Auto Layout", icon: Zap },
-              { id: "hierarchical", label: "Hierarchical", icon: BarChart3 },
-              { id: "circular", label: "Circular", icon: RefreshCw },
-            ].map(({ id, label, icon: Icon }) => (
+            {!isSuccess && (
               <button
-                key={id}
-                onClick={() => setSelectedLayout(id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold ${
-                  selectedLayout === id
-                    ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
-                    : "glass-effect hover:bg-white/20"
+                onClick={fetchTopologyData}
+                disabled={isLoading}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
+              >
+                {isLoading ? "Loading..." : "Generate Topology"}
+              </button>
+            )}
+          </div>
+
+          {/* <div className="flex flex-wrap justify-center gap-4">
+            {showTelemetry && (
+              <button
+                onClick={startTelemetry}
+                disabled={isLoading}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
+              >
+                Start Telemetry
+              </button>
+            )}
+          </div> */}
+
+          <div className="flex flex-wrap justify-center gap-4">
+            {showTelemetry && (
+              <button
+                onClick={startTelemetry}
+                disabled={isLoading || nodeProfile}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25 ${
+                  isLoading || nodeProfile
+                    ? "opacity-70 cursor-not-allowed"
+                    : ""
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                {label}
+                {isLoading ? "Starting..." : "Start Telemetry"}
               </button>
-            ))}
+            )}
           </div>
         </div>
 
-        {/* Topology Visualization */}
-        <div className="glass-effect rounded-2xl p-6 mb-8">
-          <div
-            ref={topologyRef}
-            className="relative w-full h-96 md:h-[600px] bg-black/20 rounded-xl border-2 border-white/20 overflow-hidden"
-          >
-            {/* SVG for connections */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              <defs>
-                <linearGradient
-                  id="connectionGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop offset="0%" stopColor="#ffecd2" />
-                  <stop offset="100%" stopColor="#fcb69f" />
-                </linearGradient>
-              </defs>
-              {connections.map(renderConnection)}
-            </svg>
-
-            {/* Nodes */}
-            {Object.values(nodes).map((node) => (
-              <div
-                key={node.name}
-                className={`absolute draggable-node ${
-                  node.type === "spine" ? "node-spine" : "node-leaf"
-                } rounded-xl p-3 min-w-[120px] text-center font-semibold text-sm shadow-lg border-2 border-white/30 hover:shadow-xl hover:shadow-white/20`}
-                style={{
-                  left: `${node.position.x}px`,
-                  top: `${node.position.y}px`,
-                  zIndex: dragNode === node.name ? 200 : 10,
-                }}
-                onMouseDown={(e) => handleMouseDown(e, node.name)}
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Server className="w-4 h-4" />
-                  <span className="text-xs font-medium opacity-75">
-                    {node.type.toUpperCase()}
-                  </span>
-                </div>
-                <div className="text-xs font-bold" onClick={()=> topologySpine(node.name)}>{node.name}</div>
+        {topologyData && (
+          <>
+            {/* Controls */}
+            <div className="glass-effect rounded-2xl p-6 mb-8">
+              <div className="flex flex-wrap justify-center gap-4">
+                {[
+                  { id: "auto", label: "Auto Layout", icon: Zap },
+                  {
+                    id: "hierarchical",
+                    label: "Hierarchical",
+                    icon: BarChart3,
+                  },
+                  { id: "circular", label: "Circular", icon: RefreshCw },
+                ].map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedLayout(id)}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 font-semibold ${
+                      selectedLayout === id
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/25"
+                        : "glass-effect hover:bg-white/20"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
 
-          {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-6 mt-6">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 node-spine rounded border border-white/30"></div>
-              <span className="text-sm">Spine Layer (Core)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 node-leaf rounded border border-white/30"></div>
-              <span className="text-sm">Leaf Layer (Access)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-1 bg-gradient-to-r from-yellow-200 to-orange-300 rounded"></div>
-              <span className="text-sm">Full Mesh Links</span>
-            </div>
-          </div>
-        </div>
+            {/* Debug Info - Remove in production */}
+            {/* <div className="glass-effect rounded-2xl p-4 mb-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>Nodes: {Object.keys(nodes).length}</div>
+                <div>Connections: {connections.length}</div>
+                <div>Container: {containerDimensions.width}x{containerDimensions.height}</div>
+                <div>Layout Applied: {layoutApplied ? 'Yes' : 'No'}</div>
+              </div>
+            </div> */}
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            icon={Network}
-            title="Total Nodes"
-            value={stats.nodes}
-            color="bg-blue-500"
-          />
-          <StatCard
-            icon={Zap}
-            title="Connections"
-            value={stats.connections}
-            color="bg-green-500"
-          />
-          <StatCard
-            icon={Server}
-            title="Spine Switches"
-            value={stats.spine}
-            color="bg-purple-500"
-          />
-          <StatCard
-            icon={Settings}
-            title="Leaf Switches"
-            value={stats.leaf}
-            color="bg-pink-500"
-          />
-        </div>
+            {/* Topology Visualization */}
+            <div className="glass-effect rounded-2xl p-6 mb-8">
+              <div
+                ref={topologyRef}
+                className="relative w-full h-[500px] md:h-[700px] bg-black/20 rounded-xl border-2 border-white/20 overflow-hidden"
+              >
+                {/* SVG for connections */}
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  style={{ zIndex: 1 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="connectionGradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#ffecd2" />
+                      <stop offset="100%" stopColor="#fcb69f" />
+                    </linearGradient>
+                  </defs>
+                  {/* Only render connections if layout has been applied and nodes have valid positions */}
+                  {layoutApplied && connections.map(renderConnection)}
+                </svg>
+
+                {/* Nodes */}
+                {Object.values(nodes).map((node) => (
+                  <div
+                    key={node.name}
+                    className={`absolute draggable-node ${getNodeStyling(
+                      node.type
+                    )} rounded-xl p-3 min-w-[120px] text-center font-semibold text-sm shadow-lg border-2 border-white/30 hover:shadow-xl hover:shadow-white/20`}
+                    style={{
+                      left: `${node.position.x}px`,
+                      top: `${node.position.y}px`,
+                      zIndex: dragNode === node.name ? 200 : 10,
+                    }}
+                    onMouseDown={(e) => handleMouseDown(e, node.name)}
+                  >
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Server className="w-4 h-4" />
+                      <span className="text-xs font-medium opacity-75">
+                        {node.type.toUpperCase()}
+                      </span>
+                    </div>
+                    {/* <div
+                      className="text-xs font-bold cursor-pointer hover:text-yellow-300"
+                      onClick={() => topologySpine(node.name)}
+                      disabled={nodeProfile}
+                    >
+                      {node.name}
+                    </div> */}
+
+                    {/* <div
+                      className={`text-xs font-bold cursor-pointer hover:text-yellow-300 ${
+                        !nodeProfile ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      onClick={
+                        nodeProfile ? () => topologySpine(node.name) : undefined
+                      }
+                    >
+                      {node.name}
+                    </div> */}
+                    {/* <button
+                      className="text-xs font-bold hover:text-yellow-300 focus:outline-none"
+                      onClick={() => topologySpine(node.name)}
+                      disabled={!nodeProfile}
+                    >
+                      {node.name}
+                    </button> */}
+                    <button
+                      className={`text-xs font-bold focus:outline-none ${
+                        nodeProfile
+                          ? "text-current hover:text-yellow-300 cursor-pointer"
+                          : "text-gray-400 cursor-not-allowed"
+                      }`}
+                      onClick={() => topologySpine(node.name)}
+                      disabled={!nodeProfile}
+                    >
+                      {node.name}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Updated Legend */}
+              <div className="flex flex-wrap justify-center gap-6 mt-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border border-white/30 bg-gradient-to-r from-purple-600 to-blue-600"></div>
+                  <span className="text-sm">Superspine Layer</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border border-white/30 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                  <span className="text-sm">Spine Layer</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border border-white/30 bg-gradient-to-r from-green-500 to-teal-500"></div>
+                  <span className="text-sm">Leaf Layer</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border border-white/30 bg-gradient-to-r from-orange-500 to-red-500"></div>
+                  <span className="text-sm">Servers</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-1 bg-gradient-to-r from-yellow-200 to-orange-300 rounded"></div>
+                  <span className="text-sm">Connections</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <StatCard
+                icon={Network}
+                title="Total Nodes"
+                value={stats.nodes}
+                color="bg-blue-500"
+              />
+              <StatCard
+                icon={Zap}
+                title="Connections"
+                value={stats.connections}
+                color="bg-green-500"
+              />
+              <StatCard
+                icon={Server}
+                title="Spine Switches"
+                value={stats.spine}
+                color="bg-purple-500"
+              />
+              <StatCard
+                icon={Settings}
+                title="Leaf Switches"
+                value={stats.leaf}
+                color="bg-pink-500"
+              />
+              <StatCard
+                icon={Server}
+                title="Servers"
+                value={stats.servers}
+                color="bg-orange-500"
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
