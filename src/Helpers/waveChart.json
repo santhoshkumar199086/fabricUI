@@ -1,0 +1,128 @@
+[
+  {
+    "_time": "2025-06-25T10:00:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "cpu-util-1min",
+    "_value": 3500,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:05:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "cpu-util-1min",
+    "_value": 4200,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:10:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "cpu-util-1min",
+    "_value": 5100,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:15:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "cpu-util-1min",
+    "_value": 4800,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:20:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "cpu-util-1min",
+    "_value": 3900,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:25:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "cpu-util-1min",
+    "_value": 4500,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:00:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-hi",
+    "_value": 92,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:05:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-hi",
+    "_value": 92,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:10:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-hi",
+    "_value": 92,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:15:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-hi",
+    "_value": 92,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:20:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-hi",
+    "_value": 92,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:25:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-hi",
+    "_value": 92,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:00:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-lo",
+    "_value": 82,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:05:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-lo",
+    "_value": 82,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:10:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-lo",
+    "_value": 82,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:15:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-lo",
+    "_value": 82,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:20:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-lo",
+    "_value": 82,
+    "host": "ea58e67cee0b"
+  },
+  {
+    "_time": "2025-06-25T10:25:00+00:00",
+    "_measurement": "dell_cpu",
+    "_field": "mem-threshold-lo",
+    "_value": 82,
+    "host": "ea58e67cee0b"
+  }
+]

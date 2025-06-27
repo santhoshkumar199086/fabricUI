@@ -1,66 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import Chart from "react-apexcharts";
-// import { useInfluxData } from "../../Hooks/useInfluxData";
-
-// const DellCpuBar = ({data}) => {
-//   const dellCpu = data.filter((item) => item._measurement === "dell_cpu");
-//   const groupByField = dellCpu.reduce((acc, point) => {
-//     if (!acc[point._field]) {
-//       acc[point._field] = [];
-//     }
-//     acc[point._field].push(point);
-//     return acc;
-//   }, {});
-
-//   const allowedFields = ["mem-threshold-hi", "mem-threshold-lo"];
-
-//   const barSeries = Object.keys(groupByField)
-//    .filter((field) => allowedFields.includes(field))
-//    .map((field) => ({
-//     name: field,
-//     data: groupByField[field].map((point) => ({
-//       x: new Date(point._time),
-//       y: point._value,
-//     })),
-//   }));
-
-//   const barOptions = {
-//     chart: {
-//       type: "bar",
-//       zoom: { enabled: false },
-//     },
-//     xaxis: {
-//       type: "datetime",
-//     },
-//     yaxis: {
-//       title: { text: "Usage (%)" },
-//     },
-//     title: {
-//       text: "CPU Metrics Over Time",
-//       align: "left",
-//     },
-//     stroke: {
-//       curve: "smooth",
-//       width: .2,
-//     },
-//     tooltip: {
-//       x: { format: "HH:mm:ss" },
-//       y: {
-//         formatter: (val) => `${val}`,
-//       },
-//     },
-//     dataLabels:{
-//       enabled:false //disable data labels here
-//     }
-//   };
-
-//   return (
-//     <Chart options={barOptions} series={barSeries} type="bar" height={350} />
-//   );
-// };
-
-// export default DellCpuBar;
-
 import React, { useState, useEffect, useMemo } from "react";
 import Chart from "react-apexcharts";
 
@@ -71,7 +8,6 @@ const DellCpuBar = ({ data }) => {
     "mem-threshold-lo",
   ]);
   const [chartType, setChartType] = useState("bar");
-  const [timeGrouping, setTimeGrouping] = useState("none");
 
   // Process and filter CPU data
   const { chartData, stats, availableFields } = useMemo(() => {
@@ -86,6 +22,7 @@ const DellCpuBar = ({ data }) => {
       return acc;
     }, {});
 
+    
     // Get all available fields from the data
     const fields = Object.keys(groupByField);
 
@@ -96,9 +33,9 @@ const DellCpuBar = ({ data }) => {
 
     // Calculate statistics
     const statistics = {};
-    Object.keys(groupByField).forEach((field) => {
-      const values = groupByField[field].map((point) => point._value);
-      statistics[field] = {
+    Object.keys(groupByField).forEach((_field) => {
+      const values = groupByField[_field].map((point) => point._value);
+      statistics[_field] = {
         current: values[values.length - 1] || 0,
         avg: values.reduce((a, b) => a + b, 0) / values.length || 0,
         max: Math.max(...values) || 0,
@@ -109,24 +46,24 @@ const DellCpuBar = ({ data }) => {
 
     // Create chart series
     const series = Object.keys(groupByField)
-      .filter((field) => selectedFields.includes(field))
-      .map((field) => {
-        const points = groupByField[field]
+      .filter((_field) => selectedFields.includes(_field))
+      .map((_field) => {
+        const points = groupByField[_field]
           .map((point) => ({
             x: new Date(point._time),
             y:
-              field === "cpu-util-1min"
+              _field === "cpu-util-1min"
                 ? (point._value / 100).toFixed(2)
                 : point._value,
           }))
           .sort((a, b) => a.x - b.x);
 
         return {
-          name: field
+          name: _field
             .replace(/-/g, " ")
             .replace(/\b\w/g, (l) => l.toUpperCase()),
           data: points,
-          color: getFieldColor(field),
+          color: getFieldColor(_field),
         };
       });
 
@@ -137,8 +74,9 @@ const DellCpuBar = ({ data }) => {
     };
   }, [data, selectedFields]);
 
+
   // Color mapping for different fields
-  function getFieldColor(field) {
+  function getFieldColor(_field) {
     const colorMap = {
       "cpu-util-1min": "#3B82F6", // Blue
       "mem-threshold-hi": "#EF4444", // Red
@@ -146,7 +84,7 @@ const DellCpuBar = ({ data }) => {
       "cpu-threshold-hi": "#8B5CF6", // Purple
       "cpu-threshold-lo": "#10B981", // Green
     };
-    return colorMap[field] || "#6B7280";
+    return colorMap[_field] || "#6B7280";
   }
 
   // Enhanced chart options
@@ -273,7 +211,7 @@ const DellCpuBar = ({ data }) => {
       y: {
         formatter: (val, { seriesIndex, dataPointIndex, w }) => {
           const seriesName = w.config.series[seriesIndex].name;
-          if (seriesName.includes("Cpu Util")) {
+          if (seriesName.includes("Cpu Util")) { 
             return `${(val * 100).toFixed(2)}%`;
           }
           return `${val}`;
@@ -303,9 +241,9 @@ const DellCpuBar = ({ data }) => {
   };
 
   // Field selection handler
-  const handleFieldToggle = (field) => {
+  const handleFieldToggle = (_field) => {
     setSelectedFields((prev) =>
-      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
+      prev.includes(_field) ? prev.filter((f) => f !== _field) : [...prev, _field]
     );
   };
 
@@ -346,20 +284,20 @@ const DellCpuBar = ({ data }) => {
             Select Metrics to Display:
           </label>
           <div className="flex flex-wrap gap-1">
-            {availableFields.map((field) => (
+            {availableFields.map((_field) => (
               <button
-                key={field}
-                onClick={() => handleFieldToggle(field)}
+                key={_field}
+                onClick={() => handleFieldToggle(_field)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  selectedFields.includes(field)
+                  selectedFields.includes(_field)
                     ? "bg-blue-100 text-blue-700 border-2 border-blue-200"
                     : "bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200"
                 }`}
               >
-                {field
+                {_field
                   .replace(/-/g, " ")
                   .replace(/\b\w/g, (l) => l.toUpperCase())}
-                {selectedFields.includes(field) && (
+                {selectedFields.includes(_field) && (
                   <span className="ml-2 text-blue-500">✓</span>
                 )}
               </button>
@@ -372,28 +310,28 @@ const DellCpuBar = ({ data }) => {
           // <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="mt-6">
             <div className="flex flex-wrap gap-4">
-              {selectedFields.slice(0, 4).map((field) => {
-                const stat = stats[field];
+              {selectedFields.slice(0, 4).map((_field) => {
+                const stat = stats[_field];
                 if (!stat) return null;
 
                 return (
-                  <div key={field} className="bg-gray-50 rounded-lg p-3">
+                  <div key={_field} className="bg-gray-50 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="relative group">
                         <h4 className="text-sm font-semibold text-gray-700 truncate max-w-[120px]">
-                          {field
+                          {_field
                             .replace(/-/g, " ")
                             .replace(/\b\w/g, (l) => l.toUpperCase())}
                         </h4>
                         <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full mb-1 whitespace-nowrap">
-                          {field
+                          {_field
                             .replace(/-/g, " ")
                             .replace(/\b\w/g, (l) => l.toUpperCase())}
                         </span>
                       </div>
                       <div
                         className="w-3 h-3 rounded-full flex-shrink-0 ml-2"
-                        style={{ backgroundColor: getFieldColor(field) }}
+                        style={{ backgroundColor: getFieldColor(_field) }}
                       ></div>
                     </div>
 
@@ -401,7 +339,7 @@ const DellCpuBar = ({ data }) => {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-500">Current:</span>
                         <span className="font-semibold">
-                          {field === "cpu-util-1min"
+                          {_field === "cpu-util-1min"
                             ? `${(stat.current / 100).toFixed(1)}%`
                             : stat.current.toFixed(1)}
                         </span>
@@ -409,7 +347,7 @@ const DellCpuBar = ({ data }) => {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-500">Average:</span>
                         <span className="font-medium">
-                          {field === "cpu-util-1min"
+                          {_field === "cpu-util-1min"
                             ? `${(stat.avg / 100).toFixed(1)}%`
                             : stat.avg.toFixed(1)}
                         </span>
@@ -417,7 +355,7 @@ const DellCpuBar = ({ data }) => {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-500">Max:</span>
                         <span className="font-medium">
-                          {field === "cpu-util-1min"
+                          {_field === "cpu-util-1min"
                             ? `${(stat.max / 100).toFixed(1)}%`
                             : stat.max.toFixed(1)}
                         </span>

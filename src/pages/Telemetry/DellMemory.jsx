@@ -63,127 +63,296 @@ import React, { useState, useEffect, useMemo } from "react";
 import Chart from "react-apexcharts";
 
 const DellMemory = ({ data }) => {
+  console.log("DellMemory",data);
+  
   const [selectedFields, setSelectedFields] = useState(["mem-usage"]);
   const [chartType, setChartType] = useState("bar");
   const [displayUnit, setDisplayUnit] = useState("GB"); // GB, MB, or raw
   const [showThresholds, setShowThresholds] = useState(true);
 
   // Process and filter Memory data
-  const { chartData, stats, availableFields, memoryHealth } = useMemo(() => {
-    const dellMemory = data.filter((item) => item._measurement === "dell_mem");
+  // const { chartData, stats, availableFields, memoryHealth } = useMemo(() => {
+  //   const dellMemory = data.filter((item) => item._measurement === "dell_mem");
 
-    // Group data by field
-    const groupByMemoryField = dellMemory.reduce((acc, point) => {
-      if (!acc[point._field]) {
-        acc[point._field] = [];
-      }
-      acc[point._field].push(point);
-      return acc;
-    }, {});
+  //   // Group data by field
+  //   const groupByMemoryField = dellMemory.reduce((acc, point) => {
+  //     if (!acc[point._field]) {
+  //       acc[point._field] = [];
+  //     }
+  //     acc[point._field].push(point);
+  //     return acc;
+  //   }, {});
 
-    // Get all available fields from the data
-    const fields = Object.keys(groupByMemoryField);
+  //   // Get all available fields from the data
+  //   const fields = Object.keys(groupByMemoryField);
 
-    // Auto-select memory usage field if available
-    const defaultFields = fields.includes("mem-usage")
-      ? ["mem-usage"]
-      : fields.slice(0, 3); // Take first 3 fields if mem-usage not found
+  //   // Auto-select memory usage field if available
+  //   const defaultFields = fields.includes("mem-usage")
+  //     ? ["mem-usage"]
+  //     : fields.slice(0, 3); // Take first 3 fields if mem-usage not found
 
-    // Calculate statistics and health
-    const statistics = {};
-    let healthScore = 100;
+  //   // Calculate statistics and health
+  //   const statistics = {};
+  //   let healthScore = 100;
 
-    Object.keys(groupByMemoryField).forEach((field) => {
-      const values = groupByMemoryField[field].map((point) => {
-        // Convert values based on unit selection
-        let convertedValue = point._value;
-        if (
-          field === "mem-usage" ||
-          field.includes("memory") ||
-          field.includes("mem")
-        ) {
-          if (displayUnit === "GB") {
-            convertedValue = point._value / (1024 * 1024 * 1024);
-          } else if (displayUnit === "MB") {
-            convertedValue = point._value / (1024 * 1024);
-          }
+  //   Object.keys(groupByMemoryField).forEach((_field) => {
+  //     const values = groupByMemoryField[_field].map((point) => {
+  //       // Convert values based on unit selection
+  //       let convertedValue = point._value;
+  //       if (
+  //         _field === "mem-usage" ||
+  //         _field.includes("memory") ||
+  //         _field.includes("mem")
+  //       ) {
+  //         if (displayUnit === "GB") {
+  //           convertedValue = point._value / (1024 * 1024 * 1024);
+  //         } else if (displayUnit === "MB") {
+  //           convertedValue = point._value / (1024 * 1024);
+  //         }
+  //       }
+  //       return convertedValue;
+  //     });
+
+  //     statistics[_field] = {
+  //       current: values[values.length - 1] || 0,
+  //       avg: values.reduce((a, b) => a + b, 0) / values.length || 0,
+  //       max: Math.max(...values) || 0,
+  //       min: Math.min(...values) || 0,
+  //       count: values.length,
+  //       trend:
+  //         values.length > 1
+  //           ? ((values[values.length - 1] - values[values.length - 2]) /
+  //               values[values.length - 2]) *
+  //             100
+  //           : 0,
+  //     };
+
+  //     // Calculate health score based on memory usage
+  //     if (_field === "mem-usage" && values.length > 0) {
+  //       const currentUsage = values[values.length - 1];
+  //       const maxMemory = Math.max(...values);
+  //       const usagePercent = (currentUsage / maxMemory) * 100;
+
+  //       if (usagePercent > 90) healthScore = 25;
+  //       else if (usagePercent > 80) healthScore = 50;
+  //       else if (usagePercent > 70) healthScore = 75;
+  //       else healthScore = 100;
+  //     }
+  //   });
+
+  //   // Create chart series
+  //   const series = Object.keys(groupByMemoryField)
+  //     .filter((_field) => selectedFields.includes(_field))
+  //     .map((_field) => {
+  //       const points = groupByMemoryField[_field]
+  //         .map((point) => {
+  //           let value = point._value;
+  //           // Convert memory values based on selected unit
+  //           if (
+  //             _field === "mem-usage" ||
+  //             _field.includes("memory") ||
+  //             _field.includes("mem")
+  //           ) {
+  //             if (displayUnit === "GB") {
+  //               value = (point._value / (1024 * 1024 * 1024)).toFixed(2);
+  //             } else if (displayUnit === "MB") {
+  //               value = (point._value / (1024 * 1024)).toFixed(2);
+  //             }
+  //           }
+
+  //           return {
+  //             x: new Date(point._time),
+  //             y: parseFloat(value),
+  //           };
+  //         })
+  //         .sort((a, b) => a.x - b.x);
+
+  //       return {
+  //         name: _field
+  //           .replace(/-/g, " ")
+  //           .replace(/\b\w/g, (l) => l.toUpperCase()),
+  //         data: points,
+  //         color: getFieldColor(_field),
+  //       };
+  //     });
+
+  //   return {
+  //     chartData: series,
+  //     stats: statistics,
+  //     availableFields: fields,
+  //     memoryHealth: healthScore,
+  //   };
+  // }, [data, selectedFields, displayUnit]);
+
+//   const { chartData, stats, availableFields, memoryHealth } = useMemo(() => {
+//   const dellMemory = data.filter((item) => item._measurement === "dell_mem");
+
+//   // Group data by field
+//   const groupByMemoryField = dellMemory.reduce((acc, point) => {
+//     if (!acc[point._field]) {
+//       acc[point._field] = [];
+//     }
+//     acc[point._field].push(point);
+//     return acc;
+//   }, {});
+
+//   // Get all available fields from the data
+//   const fields = Object.keys(groupByMemoryField);
+
+//   // Auto-select available memory field
+//   const defaultFields = fields.includes("avail-memory") 
+//     ? ["avail-memory"] 
+//     : fields.slice(0, 1);
+
+//   // Calculate statistics and health
+//   const statistics = {};
+//   let healthScore = 100;
+
+//   Object.keys(groupByMemoryField).forEach((_field) => {
+//     const values = groupByMemoryField[_field].map((point) => point._value);
+
+//     statistics[_field] = {
+//       current: values[values.length - 1] || 0,
+//       avg: values.reduce((a, b) => a + b, 0) / values.length || 0,
+//       max: Math.max(...values) || 0,
+//       min: Math.min(...values) || 0,
+//       count: values.length,
+//       trend: values.length > 1
+//         ? ((values[values.length - 1] - values[values.length - 2]) / 
+//             values[values.length - 2]) * 100
+//         : 0,
+//     };
+
+//     // Calculate health score based on available memory
+//     if (_field === "avail-memory" && values.length > 0) {
+//       const currentAvailable = values[values.length - 1];
+//       if (currentAvailable < 500000) healthScore = 25;
+//       else if (currentAvailable < 1000000) healthScore = 50;
+//       else if (currentAvailable < 1500000) healthScore = 75;
+//       else healthScore = 100;
+//     }
+//   });
+
+//   // Create chart series
+//   const series = Object.keys(groupByMemoryField)
+//     .filter((_field) => selectedFields.includes(_field))
+//     .map((_field) => {
+//       const points = groupByMemoryField[_field]
+//         .map((point) => ({
+//           x: new Date(point._time),
+//           y: point._value, // Use raw value or apply conversion if needed
+//         }))
+//         .sort((a, b) => a.x - b.x);
+
+//       return {
+//         name: _field.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+//         data: points,
+//         color: getFieldColor(_field),
+//       };
+//     });
+
+//   return {
+//     chartData: series,
+//     stats: statistics,
+//     availableFields: fields,
+//     memoryHealth: healthScore,
+//   };
+// }, [data, selectedFields, displayUnit]);
+
+const { chartData, stats, availableFields, memoryHealth } = useMemo(() => {
+  const dellMemory = data.filter((item) => item._measurement === "dell_mem");
+
+  // Group data by field
+  const groupByMemoryField = dellMemory.reduce((acc, point) => {
+    if (!acc[point._field]) {
+      acc[point._field] = [];
+    }
+    acc[point._field].push(point);
+    return acc;
+  }, {});
+
+  const fields = Object.keys(groupByMemoryField);
+  const defaultFields = fields.includes("avail-memory") 
+    ? ["avail-memory"] 
+    : fields.slice(0, 1);
+
+  const statistics = {};
+  let healthScore = 100;
+
+  Object.keys(groupByMemoryField).forEach((_field) => {
+    const values = groupByMemoryField[_field].map((point) => {
+      let convertedValue = point._value; // Default: KB (raw)
+      
+      if (_field.includes("memory") || _field.includes("mem")) {
+        if (displayUnit === "GB") {
+          convertedValue = point._value / (1024 * 1024); // KB → GB
+        } else if (displayUnit === "MB") {
+          convertedValue = point._value / 1024; // KB → MB
         }
-        return convertedValue;
-      });
-
-      statistics[field] = {
-        current: values[values.length - 1] || 0,
-        avg: values.reduce((a, b) => a + b, 0) / values.length || 0,
-        max: Math.max(...values) || 0,
-        min: Math.min(...values) || 0,
-        count: values.length,
-        trend:
-          values.length > 1
-            ? ((values[values.length - 1] - values[values.length - 2]) /
-                values[values.length - 2]) *
-              100
-            : 0,
-      };
-
-      // Calculate health score based on memory usage
-      if (field === "mem-usage" && values.length > 0) {
-        const currentUsage = values[values.length - 1];
-        const maxMemory = Math.max(...values);
-        const usagePercent = (currentUsage / maxMemory) * 100;
-
-        if (usagePercent > 90) healthScore = 25;
-        else if (usagePercent > 80) healthScore = 50;
-        else if (usagePercent > 70) healthScore = 75;
-        else healthScore = 100;
       }
+      return convertedValue;
     });
 
-    // Create chart series
-    const series = Object.keys(groupByMemoryField)
-      .filter((field) => selectedFields.includes(field))
-      .map((field) => {
-        const points = groupByMemoryField[field]
-          .map((point) => {
-            let value = point._value;
-            // Convert memory values based on selected unit
-            if (
-              field === "mem-usage" ||
-              field.includes("memory") ||
-              field.includes("mem")
-            ) {
-              if (displayUnit === "GB") {
-                value = (point._value / (1024 * 1024 * 1024)).toFixed(2);
-              } else if (displayUnit === "MB") {
-                value = (point._value / (1024 * 1024)).toFixed(2);
-              }
-            }
-
-            return {
-              x: new Date(point._time),
-              y: parseFloat(value),
-            };
-          })
-          .sort((a, b) => a.x - b.x);
-
-        return {
-          name: field
-            .replace(/-/g, " ")
-            .replace(/\b\w/g, (l) => l.toUpperCase()),
-          data: points,
-          color: getFieldColor(field),
-        };
-      });
-
-    return {
-      chartData: series,
-      stats: statistics,
-      availableFields: fields,
-      memoryHealth: healthScore,
+    statistics[_field] = {
+      current: values[values.length - 1] || 0,
+      avg: values.reduce((a, b) => a + b, 0) / values.length || 0,
+      max: Math.max(...values) || 0,
+      min: Math.min(...values) || 0,
+      count: values.length,
+      trend: values.length > 1
+        ? ((values[values.length - 1] - values[values.length - 2]) / 
+            values[values.length - 2]) * 100
+        : 0,
     };
-  }, [data, selectedFields, displayUnit]);
+
+    // Health score based on available memory (in KB)
+    if (_field === "avail-memory" && values.length > 0) {
+      const currentAvailableKB = groupByMemoryField[_field][groupByMemoryField[_field].length - 1]._value;
+      if (currentAvailableKB < 500000) healthScore = 25;      // < ~500MB
+      else if (currentAvailableKB < 1000000) healthScore = 50; // < ~1GB
+      else if (currentAvailableKB < 1500000) healthScore = 75; // < ~1.5GB
+      else healthScore = 100;
+    }
+  });
+
+  // Chart series with correct units
+  const series = Object.keys(groupByMemoryField)
+    .filter((_field) => selectedFields.includes(_field))
+    .map((_field) => {
+      const points = groupByMemoryField[_field]
+        .map((point) => {
+          let value = point._value;
+          if (_field.includes("memory") || _field.includes("mem")) {
+            if (displayUnit === "GB") {
+              value = point._value / (1024 * 1024); // KB → GB
+            } else if (displayUnit === "MB") {
+              value = point._value / 1024; // KB → MB
+            }
+          }
+          return {
+            x: new Date(point._time),
+            y: parseFloat(value?.toFixed(2)), // Round to 2 decimal places
+          };
+        })
+        .sort((a, b) => a.x - b.x);
+
+      return {
+        name: _field.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+        data: points,
+        color: getFieldColor(_field),
+      };
+    });
+
+  return {
+    chartData: series,
+    stats: statistics,
+    availableFields: fields,
+    memoryHealth: healthScore,
+  };
+}, [data, selectedFields, displayUnit]);
 
   // Color mapping for different memory fields
-  function getFieldColor(field) {
+  function getFieldColor(_field) {
     const colorMap = {
       "mem-usage": "#10B981", // Green
       "mem-total": "#3B82F6", // Blue
@@ -194,7 +363,7 @@ const DellMemory = ({ data }) => {
       "memory-usage": "#10B981", // Green (alternative naming)
       "memory-total": "#3B82F6", // Blue (alternative naming)
     };
-    return colorMap[field] || "#6B7280";
+    return colorMap[_field] || "#6B7280";
   }
 
   // Get memory health color
@@ -394,9 +563,9 @@ const DellMemory = ({ data }) => {
   };
 
   // Field selection handler
-  const handleFieldToggle = (field) => {
+  const handleFieldToggle = (_field) => {
     setSelectedFields((prev) =>
-      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
+      prev.includes(_field) ? prev.filter((f) => f !== _field) : [...prev, _field]
     );
   };
 
@@ -473,20 +642,20 @@ const DellMemory = ({ data }) => {
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
-            {availableFields.map((field) => (
+            {availableFields.map((_field) => (
               <button
-                key={field}
-                onClick={() => handleFieldToggle(field)}
+                key={_field}
+                onClick={() => handleFieldToggle(_field)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  selectedFields.includes(field)
+                  selectedFields.includes(_field)
                     ? "bg-green-100 text-green-700 border-2 border-green-200"
                     : "bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200"
                 }`}
               >
-                {field
+                {_field
                   .replace(/-/g, " ")
                   .replace(/\b\w/g, (l) => l.toUpperCase())}
-                {selectedFields.includes(field) && (
+                {selectedFields.includes(_field) && (
                   <span className="ml-2 text-green-500">✓</span>
                 )}
               </button>
@@ -499,22 +668,22 @@ const DellMemory = ({ data }) => {
           // <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="mt-6">
             <div className="flex flex-wrap gap-4">
-            {selectedFields.slice(0, 4).map((field) => {
-              const stat = stats[field];
+            {selectedFields.slice(0, 4).map((_field) => {
+              const stat = stats[_field];
               if (!stat) return null;
 
               return (
-                <div key={field} className="bg-gray-50 rounded-lg p-2">
+                <div key={_field} className="bg-gray-50 rounded-lg p-2">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-gray-700">
-                      {field
+                      {_field
                         .replace(/-/g, " ")
                         .replace(/\b\w/g, (l) => l.toUpperCase())}
                     </h4>
                     <div className="flex items-center space-x-2">
                       <div
                         className="w-3 h-3 rounded-full flex-shrink-0 ml-2"
-                        style={{ backgroundColor: getFieldColor(field) }}
+                        style={{ backgroundColor: getFieldColor(_field) }}
                       ></div>
                       {stat.trend !== 0 && (
                         <span
